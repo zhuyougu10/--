@@ -32,11 +32,12 @@ public class AuthService {
             .orElseGet(() -> {
                 User newUser = new User();
                 newUser.setOpenid(openid);
-                newUser.setUnionid(session.getUnionid());
+                newUser.setUnionId(session.getUnionid());
                 newUser.setUserType(1);
                 newUser.setStatus(1);
                 newUser.setNoShowCount(0);
-                return userRepository.save(newUser);
+                userRepository.insert(newUser);
+                return newUser;
             });
 
         if (user.getStatus() == 0) {
@@ -71,7 +72,7 @@ public class AuthService {
         }
 
         admin.setLastLoginAt(LocalDateTime.now());
-        adminUserRepository.save(admin);
+        adminUserRepository.updateById(admin);
 
         String token = jwtUtils.generateToken(admin.getId(), "ADMIN", true);
         String refreshToken = jwtUtils.generateRefreshToken(admin.getId());
