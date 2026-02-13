@@ -9,4 +9,5 @@ public class UserPrincipal {
     private Long userId;
     private String userType;
     private Boolean isAdmin;
+    private String username;
 }
