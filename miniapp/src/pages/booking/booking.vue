@@ -1,8 +1,8 @@
 <template>
   <view class="container">
     <view class="venue-info">
-      <text class="venue-name">{{ venue.name }}</text>
-      <text class="court-name">{{ court.name }}</text>
+      <text class="venue-name">{{ currentVenue?.name }}</text>
+      <text class="court-name">{{ court?.name }}</text>
     </view>
     
     <view class="date-picker">
@@ -64,132 +64,87 @@
   </view>
 </template>
 
-<script>
-import { getVenueDetail, getTimeSlots } from '@/api/venue'
-import { createBooking } from '@/api/booking'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { useVenue, useTimeSlots } from '@/composables/useVenue'
+import { useBooking } from '@/composables/useBooking'
+import { generateDateList, formatTime } from '@/utils/date'
+import type { TimeSlot, Court } from '@/types'
 
-export default {
-  data() {
-    return {
-      venueId: null,
-      courtId: null,
-      venue: {},
-      court: {},
-      dateList: [],
-      selectedDate: '',
-      slots: [],
-      selectedSlots: [],
-      loading: false,
-      submitting: false
-    }
-  },
-  onLoad(options) {
-    this.venueId = options.venueId
-    this.courtId = options.courtId
-    this.initDateList()
-    this.loadVenue()
-  },
-  methods: {
-    async loadVenue() {
-      try {
-        this.venue = await getVenueDetail(this.venueId)
-        this.court = this.venue.courts?.find(c => c.id == this.courtId) || {}
-      } catch (e) {
-        console.error(e)
-      }
-    },
+const venueId = ref(0)
+const courtId = ref(0)
+
+const { currentVenue, loadVenueDetail } = useVenue()
+const { slots, loading, loadSlots } = useTimeSlots()
+const { submitting, submitBooking: doSubmitBooking } = useBooking()
+
+const dateList = computed(() => generateDateList(7))
+const selectedDate = ref('')
+const selectedSlots = ref<TimeSlot[]>([])
+
+const court = computed<Court | undefined>(() => 
+  currentVenue.value?.courts?.find(c => c.id === courtId.value)
+)
+
+onLoad((options) => {
+  venueId.value = Number(options?.venueId)
+  courtId.value = Number(options?.courtId)
+  initDateList()
+  loadVenueDetail(venueId.value)
+})
+
+const initDateList = () => {
+  selectedDate.value = dateList.value[0]?.value || ''
+  loadSlotsData()
+}
+
+const loadSlotsData = async () => {
+  await loadSlots(venueId.value, courtId.value, selectedDate.value)
+  selectedSlots.value = []
+}
+
+const selectDate = (date: string) => {
+  selectedDate.value = date
+  loadSlotsData()
+}
+
+const toggleSlot = (slot: TimeSlot) => {
+  if (slot.status !== 'free') return
+  
+  const index = selectedSlots.value.findIndex(s => s.startTime === slot.startTime)
+  
+  if (index > -1) {
+    selectedSlots.value.splice(index, 1)
+  } else {
+    selectedSlots.value.push(slot)
+    selectedSlots.value.sort((a, b) => a.startTime.localeCompare(b.startTime))
+  }
+}
+
+const isSelected = (slot: TimeSlot): boolean => {
+  return selectedSlots.value.some(s => s.startTime === slot.startTime)
+}
+
+const submitBooking = async () => {
+  if (selectedSlots.value.length === 0 || submitting.value) return
+  
+  const bookingNo = await doSubmitBooking({
+    venueId: venueId.value,
+    courtId: courtId.value,
+    bookingDate: selectedDate.value,
+    startTime: selectedSlots.value[0].startTime,
+    endTime: selectedSlots.value[selectedSlots.value.length - 1].endTime
+  })
+  
+  if (bookingNo) {
+    uni.showToast({ title: '预约成功', icon: 'success' })
     
-    initDateList() {
-      const dates = []
-      const weekDays = ['日', '一', '二', '三', '四', '五', '六']
-      const today = new Date()
-      
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(today)
-        date.setDate(today.getDate() + i)
-        dates.push({
-          value: this.formatDate(date),
-          week: i === 0 ? '今天' : '周' + weekDays[date.getDay()],
-          day: date.getDate()
-        })
-      }
-      
-      this.dateList = dates
-      this.selectedDate = dates[0].value
-      this.loadSlots()
-    },
-    
-    async loadSlots() {
-      this.loading = true
-      try {
-        this.slots = await getTimeSlots(this.venueId, this.courtId, this.selectedDate)
-        this.selectedSlots = []
-      } catch (e) {
-        console.error(e)
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    selectDate(date) {
-      this.selectedDate = date
-      this.loadSlots()
-    },
-    
-    toggleSlot(slot) {
-      if (slot.status !== 'free') return
-      
-      const index = this.selectedSlots.findIndex(s => s.startTime === slot.startTime)
-      
-      if (index > -1) {
-        this.selectedSlots.splice(index, 1)
-      } else {
-        this.selectedSlots.push(slot)
-        this.selectedSlots.sort((a, b) => a.startTime.localeCompare(b.startTime))
-      }
-    },
-    
-    isSelected(slot) {
-      return this.selectedSlots.some(s => s.startTime === slot.startTime)
-    },
-    
-    async submitBooking() {
-      if (this.selectedSlots.length === 0 || this.submitting) return
-      
-      this.submitting = true
-      try {
-        const result = await createBooking({
-          venueId: this.venueId,
-          courtId: this.courtId,
-          bookingDate: this.selectedDate,
-          startTime: this.selectedSlots[0].startTime,
-          endTime: this.selectedSlots[this.selectedSlots.length - 1].endTime
-        })
-        
-        uni.showToast({ title: '预约成功', icon: 'success' })
-        
-        setTimeout(() => {
-          uni.redirectTo({
-            url: `/pages/booking-detail/booking-detail?bookingNo=${result.bookingNo}`
-          })
-        }, 1500)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        this.submitting = false
-      }
-    },
-    
-    formatDate(date) {
-      const y = date.getFullYear()
-      const m = String(date.getMonth() + 1).padStart(2, '0')
-      const d = String(date.getDate()).padStart(2, '0')
-      return `${y}-${m}-${d}`
-    },
-    
-    formatTime(time) {
-      return time.substring(0, 5)
-    }
+    setTimeout(() => {
+      uni.redirectTo({
+        url: `/pages/booking-detail/booking-detail?bookingNo=${bookingNo}`
+      })
+    }, 1500)
   }
 }
 </script>

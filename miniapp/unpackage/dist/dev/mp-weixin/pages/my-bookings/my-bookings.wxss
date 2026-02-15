@@ -1,0 +1,102 @@
+
+.container.data-v-294f3e7e {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+.tabs.data-v-294f3e7e {
+  display: flex;
+  background: #fff;
+  padding: 20rpx;
+}
+.tab-item.data-v-294f3e7e {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  border-radius: 8rpx;
+}
+.tab-item.active.data-v-294f3e7e {
+  background: #e6f7ff;
+  color: #1890ff;
+  font-weight: bold;
+}
+.booking-list.data-v-294f3e7e {
+  padding: 20rpx;
+}
+.booking-card.data-v-294f3e7e {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+.booking-header.data-v-294f3e7e {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.venue-name.data-v-294f3e7e {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+.status-tag.data-v-294f3e7e {
+  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+}
+.status-tag.pending.data-v-294f3e7e {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+.status-tag.cancelled.data-v-294f3e7e {
+  background: #f5f5f5;
+  color: #999;
+}
+.status-tag.completed.data-v-294f3e7e {
+  background: #f6ffed;
+  color: #52c41a;
+}
+.status-tag.no-show.data-v-294f3e7e {
+  background: #fff7e6;
+  color: #faad14;
+}
+.booking-info.data-v-294f3e7e {
+  border-top: 1rpx solid #f5f5f5;
+  padding-top: 20rpx;
+}
+.info-row.data-v-294f3e7e {
+  display: flex;
+  margin-bottom: 12rpx;
+}
+.label.data-v-294f3e7e {
+  color: #999;
+  font-size: 26rpx;
+  width: 100rpx;
+}
+.value.data-v-294f3e7e {
+  color: #333;
+  font-size: 26rpx;
+}
+.booking-footer.data-v-294f3e7e {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f5f5f5;
+}
+.booking-no.data-v-294f3e7e {
+  font-size: 24rpx;
+  color: #999;
+}
+.arrow.data-v-294f3e7e {
+  color: #ccc;
+  font-size: 28rpx;
+}
+.empty.data-v-294f3e7e, .loading.data-v-294f3e7e {
+  text-align: center;
+  padding: 100rpx 0;
+  color: #999;
+}
+

@@ -11,3 +11,5 @@ target/
 Thumbs.db
 .worktrees/
 node_modules/
+dist/
+unpackage/

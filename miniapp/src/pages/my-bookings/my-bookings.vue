@@ -77,70 +77,41 @@
   </view>
 </template>
 
-<script>
-import { getMyBookings } from '@/api/booking'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { useBooking, useBookingStatus } from '@/composables/useBooking'
 
-export default {
-  data() {
-    return {
-      activeStatus: 'all',
-      bookings: [],
-      loading: false
-    }
-  },
-  onLoad(options) {
-    if (options.status) {
-      this.activeStatus = options.status === 'all' ? 'all' : parseInt(options.status)
-    }
-    this.loadBookings()
-  },
-  onShow() {
-    this.loadBookings()
-  },
-  methods: {
-    async loadBookings() {
-      this.loading = true
-      try {
-        const status = this.activeStatus === 'all' ? null : this.activeStatus
-        this.bookings = await getMyBookings(status)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    changeStatus(status) {
-      this.activeStatus = status
-      this.loadBookings()
-    },
-    
-    getStatusClass(status) {
-      const classes = {
-        1: 'pending',
-        2: 'cancelled',
-        3: 'completed',
-        4: 'no-show'
-      }
-      return classes[status] || ''
-    },
-    
-    getStatusText(status) {
-      const texts = {
-        1: '待使用',
-        2: '已取消',
-        3: '已完成',
-        4: '爽约'
-      }
-      return texts[status] || '未知'
-    },
-    
-    goToDetail(bookingNo) {
-      uni.navigateTo({
-        url: `/pages/booking-detail/booking-detail?bookingNo=${bookingNo}`
-      })
-    }
+const { bookings, loading, loadBookings } = useBooking()
+const { getStatusText, getStatusClass } = useBookingStatus()
+
+const activeStatus = ref<'all' | number>('all')
+
+onLoad((options) => {
+  if (options?.status) {
+    activeStatus.value = options.status === 'all' ? 'all' : parseInt(options.status)
   }
+  loadBookingsData()
+})
+
+onShow(() => {
+  loadBookingsData()
+})
+
+const loadBookingsData = async () => {
+  const status = activeStatus.value === 'all' ? undefined : activeStatus.value as number
+  await loadBookings(status)
+}
+
+const changeStatus = (status: 'all' | number) => {
+  activeStatus.value = status
+  loadBookingsData()
+}
+
+const goToDetail = (bookingNo: string) => {
+  uni.navigateTo({
+    url: `/pages/booking-detail/booking-detail?bookingNo=${bookingNo}`
+  })
 }
 </script>
 

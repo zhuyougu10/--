@@ -2,10 +2,10 @@
   <view class="container">
     <view class="user-card" v-if="isLoggedIn">
       <view class="user-info">
-        <image class="avatar" :src="userInfo.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
+        <image class="avatar" :src="userInfo?.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
         <view class="user-detail">
-          <text class="nickname">{{ userInfo.nickname || '用户' }}</text>
-          <text class="user-type">{{ getUserTypeName(userInfo.userType) }}</text>
+          <text class="nickname">{{ userInfo?.nickname || '用户' }}</text>
+          <text class="user-type">{{ getUserTypeName(userInfo?.userType || '') }}</text>
         </view>
       </view>
     </view>
@@ -68,119 +68,74 @@
   </view>
 </template>
 
-<script>
-import { wechatLogin, getUserProfile } from '@/api/auth'
-import { getMyBookings } from '@/api/booking'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { useAuth, useUserType } from '@/composables/useAuth'
+import { useBooking } from '@/composables/useBooking'
 
-export default {
-  data() {
-    return {
-      isLoggedIn: false,
-      userInfo: {},
-      pendingCount: 0
-    }
-  },
-  onShow() {
-    this.checkLogin()
-    if (this.isLoggedIn) {
-      this.loadPendingCount()
-    }
-  },
-  methods: {
-    checkLogin() {
-      const token = uni.getStorageSync('token')
-      const userInfo = uni.getStorageSync('userInfo')
-      this.isLoggedIn = !!token
-      this.userInfo = userInfo || {}
-    },
-    
-    async handleLogin() {
-      try {
-        const loginRes = await new Promise((resolve, reject) => {
-          uni.login({
-            provider: 'weixin',
-            success: resolve,
-            fail: reject
-          })
-        })
-        
-        const result = await wechatLogin(loginRes.code)
-        
-        uni.setStorageSync('token', result.token)
-        uni.setStorageSync('userInfo', result.user)
-        
-        this.isLoggedIn = true
-        this.userInfo = result.user
-        
-        uni.showToast({ title: '登录成功', icon: 'success' })
-        this.loadPendingCount()
-      } catch (e) {
-        console.error(e)
-        uni.showToast({ title: '登录失败', icon: 'none' })
-      }
-    },
-    
-    async loadPendingCount() {
-      try {
-        const bookings = await getMyBookings(1)
-        this.pendingCount = bookings.length || 0
-      } catch (e) {
-        console.error(e)
-      }
-    },
-    
-    getUserTypeName(type) {
-      const types = {
-        student: '学生',
-        teacher: '教师',
-        staff: '教职工'
-      }
-      return types[type] || '用户'
-    },
-    
-    goToBookings(status) {
-      if (!this.isLoggedIn) {
-        uni.showToast({ title: '请先登录', icon: 'none' })
-        return
-      }
-      uni.navigateTo({
-        url: `/pages/my-bookings/my-bookings?status=${status}`
-      })
-    },
-    
-    showAbout() {
-      uni.showModal({
-        title: '关于我们',
-        content: '校园球馆智能预约系统\n版本: 1.0.0',
-        showCancel: false
-      })
-    },
-    
-    showRules() {
-      uni.showModal({
-        title: '预约须知',
-        content: '1. 每人每天最多预约2个时段\n2. 预约开始前30分钟不可取消\n3. 爽约3次将被限制预约7天\n4. 请在预约时段开始前15分钟内核销签到',
-        showCancel: false
-      })
-    },
-    
-    handleLogout() {
-      uni.showModal({
-        title: '确认退出',
-        content: '确定要退出登录吗？',
-        success: (res) => {
-          if (res.confirm) {
-            uni.removeStorageSync('token')
-            uni.removeStorageSync('userInfo')
-            this.isLoggedIn = false
-            this.userInfo = {}
-            this.pendingCount = 0
-            uni.showToast({ title: '已退出', icon: 'success' })
-          }
-        }
-      })
-    }
+const { isLoggedIn, userInfo, checkLogin, login, logout } = useAuth()
+const { getUserTypeName } = useUserType()
+const { loadBookings, bookings } = useBooking()
+
+const pendingCount = ref(0)
+
+onShow(() => {
+  checkLogin()
+  if (isLoggedIn.value) {
+    loadPendingCount()
   }
+})
+
+const loadPendingCount = async () => {
+  await loadBookings(1)
+  pendingCount.value = bookings.value.length || 0
+}
+
+const handleLogin = async () => {
+  const success = await login()
+  if (success) {
+    loadPendingCount()
+  }
+}
+
+const goToBookings = (status: 'all' | number) => {
+  if (!isLoggedIn.value) {
+    uni.showToast({ title: '请先登录', icon: 'none' })
+    return
+  }
+  uni.navigateTo({
+    url: `/pages/my-bookings/my-bookings?status=${status}`
+  })
+}
+
+const showAbout = () => {
+  uni.showModal({
+    title: '关于我们',
+    content: '校园球馆智能预约系统\n版本: 1.0.0',
+    showCancel: false
+  })
+}
+
+const showRules = () => {
+  uni.showModal({
+    title: '预约须知',
+    content: '1. 每人每天最多预约2个时段\n2. 预约开始前30分钟不可取消\n3. 爽约3次将被限制预约7天\n4. 请在预约时段开始前15分钟内核销签到',
+    showCancel: false
+  })
+}
+
+const handleLogout = () => {
+  uni.showModal({
+    title: '确认退出',
+    content: '确定要退出登录吗？',
+    success: (res) => {
+      if (res.confirm) {
+        logout()
+        pendingCount.value = 0
+      }
+    }
+  })
 }
 </script>
 

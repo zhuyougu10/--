@@ -57,20 +57,20 @@
       {
         "pagePath": "pages/index/index",
         "text": "首页",
-        "iconPath": "static/tab/home.svg",
-        "selectedIconPath": "static/tab/home-active.svg"
+        "iconPath": "static/tab/home.png",
+        "selectedIconPath": "static/tab/home-active.png"
       },
       {
         "pagePath": "pages/venue/venue",
         "text": "球馆",
-        "iconPath": "static/tab/venue.svg",
-        "selectedIconPath": "static/tab/venue-active.svg"
+        "iconPath": "static/tab/venue.png",
+        "selectedIconPath": "static/tab/venue-active.png"
       },
       {
         "pagePath": "pages/my/my",
         "text": "我的",
-        "iconPath": "static/tab/my.svg",
-        "selectedIconPath": "static/tab/my-active.svg"
+        "iconPath": "static/tab/my.png",
+        "selectedIconPath": "static/tab/my-active.png"
       }
     ]
   }

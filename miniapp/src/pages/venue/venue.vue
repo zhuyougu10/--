@@ -69,75 +69,52 @@
   </view>
 </template>
 
-<script>
-import { getVenueList } from '@/api/venue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { useVenue, useSportType } from '@/composables/useVenue'
+import { isVenueOpen } from '@/utils/date'
+import type { Venue } from '@/types'
 
-export default {
-  data() {
-    return {
-      venues: [],
-      keyword: '',
-      activeType: '',
-      loading: false
-    }
-  },
-  computed: {
-    filteredVenues() {
-      let result = this.venues
-      if (this.activeType) {
-        result = result.filter(v => v.sportType === this.activeType)
-      }
-      if (this.keyword) {
-        const kw = this.keyword.toLowerCase()
-        result = result.filter(v => 
-          v.name.toLowerCase().includes(kw) || 
-          v.location.toLowerCase().includes(kw)
-        )
-      }
-      return result
-    }
-  },
-  onShow() {
-    this.loadVenues()
-  },
-  methods: {
-    async loadVenues() {
-      this.loading = true
-      try {
-        this.venues = await getVenueList()
-      } catch (e) {
-        console.error(e)
-      } finally {
-        this.loading = false
-      }
-    },
-    getSportTypeName(type) {
-      const types = {
-        badminton: '羽毛球',
-        basketball: '篮球',
-        table_tennis: '乒乓球',
-        tennis: '网球'
-      }
-      return types[type] || type
-    },
-    isOpen(venue) {
-      if (venue.status !== 1) return false
-      const now = new Date()
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-      return currentTime >= venue.openTime && currentTime <= venue.closeTime
-    },
-    filterByType(type) {
-      this.activeType = type
-    },
-    search() {
-      // keyword filter is computed
-    },
-    goToVenue(id) {
-      uni.navigateTo({
-        url: `/pages/venue-detail/venue-detail?id=${id}`
-      })
-    }
+const { venues, loading, loadVenues } = useVenue()
+const { getSportTypeName } = useSportType()
+
+const keyword = ref('')
+const activeType = ref('')
+
+const filteredVenues = computed(() => {
+  let result = venues.value
+  if (activeType.value) {
+    result = result.filter(v => v.sportType === activeType.value)
   }
+  if (keyword.value) {
+    const kw = keyword.value.toLowerCase()
+    result = result.filter(v => 
+      v.name.toLowerCase().includes(kw) || 
+      v.location.toLowerCase().includes(kw)
+    )
+  }
+  return result
+})
+
+onShow(() => {
+  loadVenues()
+})
+
+const isOpen = (venue: Venue) => isVenueOpen(venue)
+
+const filterByType = (type: string) => {
+  activeType.value = type
+}
+
+const search = () => {
+  // keyword filter is computed
+}
+
+const goToVenue = (id: number) => {
+  uni.navigateTo({
+    url: `/pages/venue-detail/venue-detail?id=${id}`
+  })
 }
 </script>
 

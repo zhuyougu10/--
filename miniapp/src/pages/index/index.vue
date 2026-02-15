@@ -35,45 +35,21 @@
   </view>
 </template>
 
-<script>
-import { getVenueList } from '@/api/venue'
+<script setup lang="ts">
+import { onShow } from '@dcloudio/uni-app'
+import { useVenue, useSportType } from '@/composables/useVenue'
 
-export default {
-  data() {
-    return {
-      venues: [],
-      loading: false
-    }
-  },
-  onShow() {
-    this.loadVenues()
-  },
-  methods: {
-    async loadVenues() {
-      this.loading = true
-      try {
-        this.venues = await getVenueList()
-      } catch (e) {
-        console.error(e)
-      } finally {
-        this.loading = false
-      }
-    },
-    getSportTypeName(type) {
-      const types = {
-        badminton: '羽毛球',
-        basketball: '篮球',
-        table_tennis: '乒乓球',
-        tennis: '网球'
-      }
-      return types[type] || type
-    },
-    goToVenue(id) {
-      uni.navigateTo({
-        url: `/pages/venue-detail/venue-detail?id=${id}`
-      })
-    }
-  }
+const { venues, loading, loadVenues } = useVenue()
+const { getSportTypeName } = useSportType()
+
+onShow(() => {
+  loadVenues()
+})
+
+const goToVenue = (id: number) => {
+  uni.navigateTo({
+    url: `/pages/venue-detail/venue-detail?id=${id}`
+  })
 }
 </script>
 

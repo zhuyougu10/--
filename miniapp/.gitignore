@@ -1,4 +1,15 @@
+.idea/
+*.iml
+*.iws
+*.ipr
+target/
+*.class
+*.jar
+*.war
+*.log
+.DS_Store
+Thumbs.db
+.worktrees/
 node_modules/
 dist/
-.uni/
-*.log
+unpackage/

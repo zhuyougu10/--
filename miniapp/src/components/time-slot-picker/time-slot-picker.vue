@@ -43,71 +43,41 @@
   </view>
 </template>
 
-<script>
-export default {
-  name: 'TimeSlotPicker',
-  props: {
-    slots: {
-      type: Array,
-      default: () => []
-    },
-    selectedDate: {
-      type: String,
-      default: ''
-    },
-    selectedSlots: {
-      type: Array,
-      default: () => []
-    },
-    daysAhead: {
-      type: Number,
-      default: 7
-    }
-  },
-  computed: {
-    dateList() {
-      const dates = []
-      const weekDays = ['日', '一', '二', '三', '四', '五', '六']
-      const today = new Date()
-      
-      for (let i = 0; i < this.daysAhead; i++) {
-        const date = new Date(today)
-        date.setDate(today.getDate() + i)
-        dates.push({
-          value: this.formatDate(date),
-          week: i === 0 ? '今天' : '周' + weekDays[date.getDay()],
-          day: date.getDate()
-        })
-      }
-      
-      return dates
-    }
-  },
-  methods: {
-    selectDate(date) {
-      this.$emit('date-change', date)
-    },
-    
-    toggleSlot(slot) {
-      if (slot.status !== 'free') return
-      this.$emit('slot-toggle', slot)
-    },
-    
-    isSelected(slot) {
-      return this.selectedSlots.some(s => s.startTime === slot.startTime)
-    },
-    
-    formatDate(date) {
-      const y = date.getFullYear()
-      const m = String(date.getMonth() + 1).padStart(2, '0')
-      const d = String(date.getDate()).padStart(2, '0')
-      return `${y}-${m}-${d}`
-    },
-    
-    formatTime(time) {
-      return time.substring(0, 5)
-    }
-  }
+<script setup lang="ts">
+import { computed } from 'vue'
+import { generateDateList, formatTime } from '@/utils/date'
+import type { TimeSlot } from '@/types'
+
+const props = withDefaults(defineProps<{
+  slots: TimeSlot[]
+  selectedDate: string
+  selectedSlots: TimeSlot[]
+  daysAhead?: number
+}>(), {
+  slots: () => [],
+  selectedDate: '',
+  selectedSlots: () => [],
+  daysAhead: 7
+})
+
+const emit = defineEmits<{
+  'date-change': [date: string]
+  'slot-toggle': [slot: TimeSlot]
+}>()
+
+const dateList = computed(() => generateDateList(props.daysAhead))
+
+const selectDate = (date: string) => {
+  emit('date-change', date)
+}
+
+const toggleSlot = (slot: TimeSlot) => {
+  if (slot.status !== 'free') return
+  emit('slot-toggle', slot)
+}
+
+const isSelected = (slot: TimeSlot): boolean => {
+  return props.selectedSlots.some(s => s.startTime === slot.startTime)
 }
 </script>
 

@@ -15,7 +15,7 @@ import java.util.List;
 
 @Tag(name = "预约API", description = "小程序端预约接口")
 @RestController
-@RequestMapping("/api/bookings")
+@RequestMapping("/bookings")
 @RequiredArgsConstructor
 public class BookingApiController {
     private final BookingService bookingService;

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "智能推荐API", description = "预约推荐接口")
 @RestController
-@RequestMapping("/api/recommendations")
+@RequestMapping("/recommendations")
 @RequiredArgsConstructor
 public class RecommendationApiController {
     private final RecommendationService recommendationService;

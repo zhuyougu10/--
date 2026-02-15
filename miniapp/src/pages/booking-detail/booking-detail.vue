@@ -2,34 +2,34 @@
   <view class="container">
     <view class="status-card" :class="statusClass">
       <text class="status-text">{{ statusText }}</text>
-      <text class="booking-no">预约单号: {{ booking.bookingNo }}</text>
+      <text class="booking-no">预约单号: {{ currentBooking?.bookingNo }}</text>
     </view>
     
     <view class="info-card">
       <view class="info-row">
         <text class="label">球馆</text>
-        <text class="value">{{ booking.venueName }}</text>
+        <text class="value">{{ currentBooking?.venueName }}</text>
       </view>
       <view class="info-row">
         <text class="label">场地</text>
-        <text class="value">{{ booking.courtName }}</text>
+        <text class="value">{{ currentBooking?.courtName }}</text>
       </view>
       <view class="info-row">
         <text class="label">日期</text>
-        <text class="value">{{ booking.bookingDate }}</text>
+        <text class="value">{{ currentBooking?.bookingDate }}</text>
       </view>
       <view class="info-row">
         <text class="label">时段</text>
-        <text class="value">{{ booking.startTime }} - {{ booking.endTime }}</text>
+        <text class="value">{{ currentBooking?.startTime }} - {{ currentBooking?.endTime }}</text>
       </view>
       <view class="info-row">
         <text class="label">创建时间</text>
-        <text class="value">{{ formatDateTime(booking.createdAt) }}</text>
+        <text class="value">{{ formatDateTime(currentBooking?.createdAt) }}</text>
       </view>
     </view>
     
-    <view class="qr-section" v-if="booking.status === 1">
-      <view class="qr-container" @click="refreshQrCode">
+    <view class="qr-section" v-if="currentBooking?.status === 1">
+      <view class="qr-container" @click="refreshQrCodeData">
         <image class="qr-code" :src="qrCodeUrl" mode="aspectFit" v-if="qrCodeUrl" />
         <view class="qr-placeholder" v-else>
           <text>点击获取核销码</text>
@@ -39,110 +39,80 @@
       <text class="qr-expire" v-if="qrExpireAt">
         有效期至: {{ formatDateTime(qrExpireAt) }}
       </text>
-      <button class="refresh-btn" @click="refreshQrCode">刷新核销码</button>
+      <button class="refresh-btn" @click="refreshQrCodeData">刷新核销码</button>
     </view>
     
-    <view class="actions" v-if="booking.status === 1">
-      <button class="cancel-btn" @click="cancelBooking">取消预约</button>
+    <view class="actions" v-if="currentBooking?.status === 1">
+      <button class="cancel-btn" @click="handleCancelBooking">取消预约</button>
     </view>
     
-    <view class="cancel-info" v-if="booking.status === 2">
-      <text class="cancel-reason">取消原因: {{ booking.cancelReason || '用户取消' }}</text>
-      <text class="cancel-time">取消时间: {{ formatDateTime(booking.cancelledAt) }}</text>
+    <view class="cancel-info" v-if="currentBooking?.status === 2">
+      <text class="cancel-reason">取消原因: {{ currentBooking?.cancelReason || '用户取消' }}</text>
+      <text class="cancel-time">取消时间: {{ formatDateTime(currentBooking?.cancelledAt) }}</text>
     </view>
     
-    <view class="checkin-info" v-if="booking.status === 3">
-      <text class="checkin-time">签到时间: {{ formatDateTime(booking.checkinTime) }}</text>
+    <view class="checkin-info" v-if="currentBooking?.status === 3">
+      <text class="checkin-time">签到时间: {{ formatDateTime(currentBooking?.checkinTime) }}</text>
     </view>
   </view>
 </template>
 
-<script>
-import { getBookingDetail, getQrCode, cancelBooking as cancelBookingApi } from '@/api/booking'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { useBooking, useQrCode, useBookingStatus } from '@/composables/useBooking'
+import { formatDateTime } from '@/utils/date'
 
-export default {
-  data() {
-    return {
-      bookingNo: '',
-      booking: {},
-      qrCodeUrl: '',
-      qrExpireAt: null
-    }
-  },
-  computed: {
-    statusClass() {
-      const classes = {
-        1: 'confirmed',
-        2: 'cancelled',
-        3: 'checked-in',
-        4: 'no-show'
-      }
-      return classes[this.booking.status] || ''
-    },
-    statusText() {
-      const texts = {
-        1: '已确认',
-        2: '已取消',
-        3: '已签到',
-        4: '爽约'
-      }
-      return texts[this.booking.status] || '未知'
-    }
-  },
-  onLoad(options) {
-    this.bookingNo = options.bookingNo
-    this.loadBooking()
-  },
-  onShow() {
-    if (this.booking.status === 1) {
-      this.refreshQrCode()
-    }
-  },
-  methods: {
-    async loadBooking() {
-      try {
-        this.booking = await getBookingDetail(this.bookingNo)
-        if (this.booking.status === 1) {
-          this.refreshQrCode()
-        }
-      } catch (e) {
-        console.error(e)
-      }
-    },
-    
-    async refreshQrCode() {
-      try {
-        const result = await getQrCode(this.bookingNo)
-        this.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(result.token)}`
-        this.qrExpireAt = result.expiresAt
-      } catch (e) {
-        console.error(e)
-      }
-    },
-    
-    async cancelBooking() {
-      uni.showModal({
-        title: '确认取消',
-        content: '确定要取消此预约吗？',
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await cancelBookingApi(this.bookingNo, '用户取消')
-              uni.showToast({ title: '取消成功', icon: 'success' })
-              this.loadBooking()
-            } catch (e) {
-              console.error(e)
-            }
-          }
-        }
-      })
-    },
-    
-    formatDateTime(datetime) {
-      if (!datetime) return ''
-      return datetime.replace('T', ' ').substring(0, 19)
-    }
+const bookingNo = ref('')
+const { currentBooking, loadBookingDetail, cancelBooking } = useBooking()
+const { qrCodeUrl, qrExpireAt, refreshQrCode } = useQrCode()
+const { getStatusText, getStatusClass } = useBookingStatus()
+
+const statusClass = computed(() => {
+  const classes: Record<number, string> = {
+    1: 'confirmed',
+    2: 'cancelled',
+    3: 'checked-in',
+    4: 'no-show'
   }
+  return classes[currentBooking.value?.status || 0] || ''
+})
+
+const statusText = computed(() => 
+  getStatusText(currentBooking.value?.status || 0)
+)
+
+onLoad((options) => {
+  if (options?.bookingNo) {
+    bookingNo.value = options.bookingNo
+    loadBookingDetail(bookingNo.value)
+  }
+})
+
+onShow(() => {
+  if (currentBooking.value?.status === 1) {
+    refreshQrCodeData()
+  }
+})
+
+const refreshQrCodeData = () => {
+  refreshQrCode(bookingNo.value)
+}
+
+const handleCancelBooking = () => {
+  uni.showModal({
+    title: '确认取消',
+    content: '确定要取消此预约吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        const success = await cancelBooking(bookingNo.value, '用户取消')
+        if (success) {
+          uni.showToast({ title: '取消成功', icon: 'success' })
+          loadBookingDetail(bookingNo.value)
+        }
+      }
+    }
+  })
 }
 </script>
 

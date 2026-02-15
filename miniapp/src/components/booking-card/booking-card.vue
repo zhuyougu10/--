@@ -2,8 +2,8 @@
   <view class="booking-card" @click="handleClick">
     <view class="booking-header">
       <text class="venue-name">{{ booking.venueName }}</text>
-      <text class="status-tag" :class="statusClass">
-        {{ statusText }}
+      <text class="status-tag" :class="getStatusClass(booking.status)">
+        {{ getStatusText(booking.status) }}
       </text>
     </view>
     
@@ -29,44 +29,25 @@
   </view>
 </template>
 
-<script>
-export default {
-  name: 'BookingCard',
-  props: {
-    booking: {
-      type: Object,
-      required: true
-    },
-    showFooter: {
-      type: Boolean,
-      default: true
-    }
-  },
-  computed: {
-    statusClass() {
-      const classes = {
-        1: 'pending',
-        2: 'cancelled',
-        3: 'completed',
-        4: 'no-show'
-      }
-      return classes[this.booking.status] || ''
-    },
-    statusText() {
-      const texts = {
-        1: '待使用',
-        2: '已取消',
-        3: '已完成',
-        4: '爽约'
-      }
-      return texts[this.booking.status] || '未知'
-    }
-  },
-  methods: {
-    handleClick() {
-      this.$emit('click', this.booking)
-    }
-  }
+<script setup lang="ts">
+import { useBookingStatus } from '@/composables/useBooking'
+import type { Booking } from '@/types'
+
+const props = withDefaults(defineProps<{
+  booking: Booking
+  showFooter?: boolean
+}>(), {
+  showFooter: true
+})
+
+const emit = defineEmits<{
+  click: [booking: Booking]
+}>()
+
+const { getStatusText, getStatusClass } = useBookingStatus()
+
+const handleClick = () => {
+  emit('click', props.booking)
 }
 </script>
 

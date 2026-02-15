@@ -17,50 +17,33 @@
   </view>
 </template>
 
-<script>
-export default {
-  name: 'VenueCard',
-  props: {
-    venue: {
-      type: Object,
-      required: true
-    },
-    showTime: {
-      type: Boolean,
-      default: true
-    },
-    showCourtCount: {
-      type: Boolean,
-      default: false
-    },
-    showStatus: {
-      type: Boolean,
-      default: false
-    }
-  },
-  computed: {
-    isOpen() {
-      if (this.venue.status !== 1) return false
-      const now = new Date()
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-      return currentTime >= this.venue.openTime && currentTime <= this.venue.closeTime
-    }
-  },
-  methods: {
-    getSportTypeName(type) {
-      const types = {
-        badminton: '羽毛球',
-        basketball: '篮球',
-        table_tennis: '乒乓球',
-        tennis: '网球'
-      }
-      return types[type] || type
-    },
-    
-    handleClick() {
-      this.$emit('click', this.venue)
-    }
-  }
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useSportType } from '@/composables/useVenue'
+import { isVenueOpen } from '@/utils/date'
+import type { Venue } from '@/types'
+
+const props = withDefaults(defineProps<{
+  venue: Venue
+  showTime?: boolean
+  showCourtCount?: boolean
+  showStatus?: boolean
+}>(), {
+  showTime: true,
+  showCourtCount: false,
+  showStatus: false
+})
+
+const emit = defineEmits<{
+  click: [venue: Venue]
+}>()
+
+const { getSportTypeName } = useSportType()
+
+const isOpen = computed(() => isVenueOpen(props.venue))
+
+const handleClick = () => {
+  emit('click', props.venue)
 }
 </script>
 

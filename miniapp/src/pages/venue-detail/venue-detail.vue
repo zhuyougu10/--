@@ -1,30 +1,30 @@
 <template>
   <view class="container">
     <view class="venue-header">
-      <image class="venue-image" :src="venue.imageUrl || '/static/default-venue.svg'" mode="aspectFill" />
+      <image class="venue-image" :src="currentVenue?.imageUrl || '/static/default-venue.svg'" mode="aspectFill" />
       <view class="venue-overlay">
-        <text class="venue-name">{{ venue.name }}</text>
-        <text class="venue-location">{{ venue.location }}</text>
+        <text class="venue-name">{{ currentVenue?.name }}</text>
+        <text class="venue-location">{{ currentVenue?.location }}</text>
       </view>
     </view>
     
     <view class="venue-info card">
       <view class="info-row">
         <text class="label">运动类型</text>
-        <text class="value">{{ getSportTypeName(venue.sportType) }}</text>
+        <text class="value">{{ getSportTypeName(currentVenue?.sportType || '') }}</text>
       </view>
       <view class="info-row">
         <text class="label">营业时间</text>
-        <text class="value">{{ venue.openTime }} - {{ venue.closeTime }}</text>
+        <text class="value">{{ currentVenue?.openTime }} - {{ currentVenue?.closeTime }}</text>
       </view>
       <view class="info-row">
         <text class="label">联系电话</text>
-        <text class="value">{{ venue.phone || '暂无' }}</text>
+        <text class="value">{{ currentVenue?.phone || '暂无' }}</text>
       </view>
       <view class="info-row">
         <text class="label">场馆状态</text>
-        <text class="value" :class="{ 'text-success': venue.status === 1 }">
-          {{ venue.status === 1 ? '营业中' : '已闭馆' }}
+        <text class="value" :class="{ 'text-success': currentVenue?.status === 1 }">
+          {{ currentVenue?.status === 1 ? '营业中' : '已闭馆' }}
         </text>
       </view>
     </view>
@@ -34,7 +34,7 @@
       <view class="court-list">
         <view 
           class="court-card" 
-          v-for="court in venue.courts" 
+          v-for="court in currentVenue?.courts" 
           :key="court.id"
           @click="goToBooking(court)"
         >
@@ -53,57 +53,41 @@
         </view>
       </view>
       
-      <view class="empty" v-if="!venue.courts || venue.courts.length === 0">
+      <view class="empty" v-if="!currentVenue?.courts || currentVenue.courts.length === 0">
         <text>暂无场地</text>
       </view>
     </view>
   </view>
 </template>
 
-<script>
-import { getVenueDetail } from '@/api/venue'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { useVenue, useSportType } from '@/composables/useVenue'
+import type { Court } from '@/types'
 
-export default {
-  data() {
-    return {
-      venueId: null,
-      venue: {}
-    }
-  },
-  onLoad(options) {
-    this.venueId = options.id
-    this.loadVenue()
-  },
-  methods: {
-    async loadVenue() {
-      try {
-        this.venue = await getVenueDetail(this.venueId)
-      } catch (e) {
-        console.error(e)
-      }
-    },
-    getSportTypeName(type) {
-      const types = {
-        badminton: '羽毛球',
-        basketball: '篮球',
-        table_tennis: '乒乓球',
-        tennis: '网球'
-      }
-      return types[type] || type
-    },
-    goToBooking(court) {
-      if (court.status !== 1) {
-        uni.showToast({
-          title: '该场地维护中',
-          icon: 'none'
-        })
-        return
-      }
-      uni.navigateTo({
-        url: `/pages/booking/booking?venueId=${this.venueId}&courtId=${court.id}`
-      })
-    }
+const venueId = ref<number>(0)
+const { currentVenue, loadVenueDetail } = useVenue()
+const { getSportTypeName } = useSportType()
+
+onLoad((options) => {
+  if (options?.id) {
+    venueId.value = Number(options.id)
+    loadVenueDetail(venueId.value)
   }
+})
+
+const goToBooking = (court: Court) => {
+  if (court.status !== 1) {
+    uni.showToast({
+      title: '该场地维护中',
+      icon: 'none'
+    })
+    return
+  }
+  uni.navigateTo({
+    url: `/pages/booking/booking?venueId=${venueId.value}&courtId=${court.id}`
+  })
 }
 </script>
 

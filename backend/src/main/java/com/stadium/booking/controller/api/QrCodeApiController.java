@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "二维码API", description = "小程序端二维码接口")
 @RestController
-@RequestMapping("/api/qrcode")
+@RequestMapping("/qrcode")
 @RequiredArgsConstructor
 public class QrCodeApiController {
     private final CheckinService checkinService;

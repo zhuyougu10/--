@@ -15,7 +15,7 @@ import java.util.List;
 
 @Tag(name = "球馆API", description = "小程序端球馆查询接口")
 @RestController
-@RequestMapping("/api/venues")
+@RequestMapping("/venues")
 @RequiredArgsConstructor
 public class VenueApiController {
     private final VenueService venueService;
