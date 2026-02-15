@@ -26,12 +26,20 @@ export function useAuth() {
       const result: LoginResult = await wechatLogin(loginRes.code)
       
       token.value = result.token
-      userInfo.value = result.user
+      userInfo.value = {
+        id: result.userId,
+        userType: result.userType === 'STUDENT' ? 0 : result.userType === 'TEACHER' ? 1 : 2,
+        userTypeText: result.userType
+      }
       
       uni.setStorageSync('token', result.token)
-      uni.setStorageSync('userInfo', result.user)
+      uni.setStorageSync('userInfo', userInfo.value)
       
-      uni.showToast({ title: '登录成功', icon: 'success' })
+      if (result.isNewUser) {
+        uni.showToast({ title: '欢迎新用户', icon: 'success' })
+      } else {
+        uni.showToast({ title: '登录成功', icon: 'success' })
+      }
       return true
     } catch (e) {
       console.error(e)
@@ -59,17 +67,28 @@ export function useAuth() {
 }
 
 export function useUserType() {
-  const userTypeMap: Record<string, string> = {
-    student: '学生',
-    teacher: '教师',
-    staff: '教职工'
+  const userTypeMap: Record<number, string> = {
+    0: '学生',
+    1: '教师',
+    2: '教职工'
   }
 
-  const getUserTypeName = (type: string): string => {
+  const userTypeCodeMap: Record<string, number> = {
+    'STUDENT': 0,
+    'TEACHER': 1,
+    'STAFF': 2
+  }
+
+  const getUserTypeName = (type: number): string => {
     return userTypeMap[type] || '用户'
   }
 
+  const getUserTypeCode = (type: string): number => {
+    return userTypeCodeMap[type] ?? 0
+  }
+
   return {
-    getUserTypeName
+    getUserTypeName,
+    getUserTypeCode
   }
 }

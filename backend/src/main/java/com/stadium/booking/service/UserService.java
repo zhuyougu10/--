@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.stadium.booking.common.exception.BusinessException;
 import com.stadium.booking.common.result.ErrorCode;
+import com.stadium.booking.dto.request.UserProfileUpdateRequest;
 import com.stadium.booking.dto.response.UserResponse;
 import com.stadium.booking.entity.User;
 import com.stadium.booking.repository.UserRepository;
@@ -51,6 +52,25 @@ public class UserService {
             user.setBannedUntil(null);
         }
         userRepository.updateById(user);
+    }
+
+    @Transactional
+    public UserResponse updateProfile(Long userId, UserProfileUpdateRequest request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
+        
+        if (request.getName() != null) {
+            user.setName(request.getName());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getAvatar() != null) {
+            user.setAvatar(request.getAvatar());
+        }
+        
+        userRepository.updateById(user);
+        return getUserDetail(userId);
     }
 
     private UserResponse toResponse(User user) {

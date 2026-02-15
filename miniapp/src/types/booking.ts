@@ -1,5 +1,9 @@
 export interface Booking {
+  id?: number
   bookingNo: string
+  userId?: number
+  userName?: string
+  userPhone?: string
   venueId: number
   venueName: string
   courtId: number
@@ -7,11 +11,16 @@ export interface Booking {
   bookingDate: string
   startTime: string
   endTime: string
+  slotCount?: number
+  bookingType?: number
   status: BookingStatus
-  createdAt: string
-  cancelledAt?: string
+  statusText?: string
   cancelReason?: string
-  checkinTime?: string
+  cancelledAt?: string
+  checkedInAt?: string
+  remark?: string
+  createdAt: string
+  qrToken?: string
 }
 
 export type BookingStatus = 1 | 2 | 3 | 4
@@ -22,4 +31,6 @@ export interface CreateBookingParams {
   bookingDate: string
   startTime: string
   endTime: string
+  remark?: string
+  bookingType?: number
 }
