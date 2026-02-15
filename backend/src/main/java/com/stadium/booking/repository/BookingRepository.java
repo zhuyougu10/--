@@ -45,7 +45,7 @@ public interface BookingRepository extends BaseMapper<Booking> {
     List<Booking> findByUserId(Long userId);
 
     @Select("""
-        SELECT COUNT(*) FROM booking 
+        SELECT COALESCE(SUM(slot_count), 0) FROM booking 
         WHERE user_id = #{userId} 
         AND booking_date = #{date} 
         AND status = 1
@@ -54,7 +54,7 @@ public interface BookingRepository extends BaseMapper<Booking> {
     int countSlotsByUserAndDate(@Param("userId") Long userId, @Param("date") LocalDate date);
 
     @Select("""
-        SELECT COUNT(*) FROM booking 
+        SELECT COALESCE(SUM(slot_count), 0) FROM booking 
         WHERE user_id = #{userId} 
         AND booking_date BETWEEN #{startDate} AND #{endDate}
         AND status = 1

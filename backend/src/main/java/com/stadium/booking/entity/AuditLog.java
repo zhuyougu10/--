@@ -1,13 +1,16 @@
 package com.stadium.booking.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
 @TableName("audit_log")
-public class AuditLog extends BaseEntity {
+public class AuditLog implements Serializable {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
     private Long userId;
     private Integer userType;
     private String username;
@@ -19,4 +22,7 @@ public class AuditLog extends BaseEntity {
     private String newValue;
     private String ipAddress;
     private String userAgent;
+    
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
 }

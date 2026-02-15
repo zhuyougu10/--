@@ -38,8 +38,10 @@ public class BookingValidator {
         validateOpenHours(request.getStartTime(), request.getEndTime(), venue);
         validateOpenDay(request.getBookingDate(), venue);
         validateTimeSlot(request.getStartTime(), request.getEndTime(), venue);
-        validateDailyLimit(userId, request.getBookingDate(), venue);
-        validateWeeklyLimit(userId, request.getBookingDate(), venue);
+        
+        int newSlotCount = calculateSlotCount(request.getStartTime(), request.getEndTime(), venue.getSlotMinutes());
+        validateDailyLimit(userId, request.getBookingDate(), venue, newSlotCount);
+        validateWeeklyLimit(userId, request.getBookingDate(), venue, newSlotCount);
     }
 
     private void validateVenueStatus(Venue venue) {
@@ -110,24 +112,24 @@ public class BookingValidator {
         }
     }
 
-    private void validateDailyLimit(Long userId, LocalDate date, Venue venue) {
+    private void validateDailyLimit(Long userId, LocalDate date, Venue venue, int newSlotCount) {
         int usedSlots = bookingRepository.countSlotsByUserAndDate(userId, date);
         
-        if (usedSlots >= venue.getDailySlotLimit()) {
+        if (usedSlots + newSlotCount > venue.getDailySlotLimit()) {
             throw new BusinessException(ErrorCode.LIMIT_EXCEEDED, 
-                "每日最多预约 " + venue.getDailySlotLimit() + " 个时段");
+                "每日最多预约 " + venue.getDailySlotLimit() + " 个时段，您今日已预约 " + usedSlots + " 个时段");
         }
     }
 
-    private void validateWeeklyLimit(Long userId, LocalDate date, Venue venue) {
+    private void validateWeeklyLimit(Long userId, LocalDate date, Venue venue, int newSlotCount) {
         LocalDate weekStart = date.minusDays(date.getDayOfWeek().getValue() - 1);
         LocalDate weekEnd = weekStart.plusDays(6);
         
         int usedSlots = bookingRepository.countSlotsByUserAndDateRange(userId, weekStart, weekEnd);
         
-        if (usedSlots >= venue.getWeeklySlotLimit()) {
+        if (usedSlots + newSlotCount > venue.getWeeklySlotLimit()) {
             throw new BusinessException(ErrorCode.LIMIT_EXCEEDED, 
-                "每周最多预约 " + venue.getWeeklySlotLimit() + " 个时段");
+                "每周最多预约 " + venue.getWeeklySlotLimit() + " 个时段，您本周已预约 " + usedSlots + " 个时段");
         }
     }
 
@@ -149,5 +151,10 @@ public class BookingValidator {
         if (!startTime.isBefore(endTime)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "开始时间必须早于结束时间");
         }
+    }
+
+    private int calculateSlotCount(LocalTime startTime, LocalTime endTime, int slotMinutes) {
+        long minutes = ChronoUnit.MINUTES.between(startTime, endTime);
+        return (int) (minutes / slotMinutes);
     }
 }

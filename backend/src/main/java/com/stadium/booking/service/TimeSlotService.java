@@ -36,12 +36,6 @@ public class TimeSlotService {
         List<TimeSlotResponse> slots = generateTimeSlots(venue, court, date);
 
         List<Booking> bookings = bookingRepository.findByCourtIdAndDate(courtId, date);
-        Map<String, Booking> bookingMap = bookings.stream()
-            .collect(Collectors.toMap(
-                b -> b.getStartTime().toString(),
-                b -> b,
-                (a, b) -> a
-            ));
 
         LocalDateTime slotStart = date.atTime(venue.getOpenTime());
         LocalDateTime slotEnd = date.atTime(venue.getCloseTime());
@@ -59,15 +53,14 @@ public class TimeSlotService {
                 continue;
             }
             
-            String key = slot.getStartTime().toString();
-            if (bookingMap.containsKey(key)) {
-                Booking booking = bookingMap.get(key);
+            Booking overlappingBooking = findOverlappingBooking(bookings, slot);
+            if (overlappingBooking != null) {
                 slot.setStatus("occupied");
                 if (isAdmin) {
                     TimeSlotResponse.BookingInfo info = new TimeSlotResponse.BookingInfo();
-                    info.setBookingNo(booking.getBookingNo());
-                    info.setUserName(booking.getUserName());
-                    info.setUserPhone(booking.getUserPhone());
+                    info.setBookingNo(overlappingBooking.getBookingNo());
+                    info.setUserName(overlappingBooking.getUserName());
+                    info.setUserPhone(overlappingBooking.getUserPhone());
                     slot.setBooking(info);
                 }
             } else if (isCourtClosed(closures, slot)) {
@@ -78,6 +71,16 @@ public class TimeSlotService {
         }
 
         return slots;
+    }
+
+    private Booking findOverlappingBooking(List<Booking> bookings, TimeSlotResponse slot) {
+        for (Booking booking : bookings) {
+            if (!booking.getStartTime().isAfter(slot.getEndTime()) && 
+                !booking.getEndTime().isBefore(slot.getStartTime())) {
+                return booking;
+            }
+        }
+        return null;
     }
 
     private List<TimeSlotResponse> generateTimeSlots(Venue venue, Court court, LocalDate date) {
