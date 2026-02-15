@@ -21,6 +21,6 @@ public interface VenueRepository extends BaseMapper<Venue> {
     @Select("SELECT * FROM venue WHERE code = #{code} AND deleted_at IS NULL")
     Optional<Venue> findByCode(String code);
 
-    @Select("SELECT MAX(code) FROM venue WHERE code LIKE #{prefix} AND deleted_at IS NULL")
+    @Select("SELECT MAX(code) FROM venue WHERE code LIKE #{prefix}")
     String findMaxCodeByPrefix(String prefix);
 }
