@@ -10,7 +10,6 @@ public class VenueCreateRequest {
     @NotBlank(message = "球馆名称不能为空")
     private String name;
 
-    @NotBlank(message = "球馆编码不能为空")
     private String code;
 
     @NotBlank(message = "运动类型不能为空")

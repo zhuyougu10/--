@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { login as loginApi, getProfile, logout as logoutApi } from '@/api/auth'
+import { ApiError } from '@/utils/request'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('admin_token') || '')
@@ -12,8 +13,8 @@ export const useUserStore = defineStore('user', () => {
 
   const login = async (credentials) => {
     const result = await loginApi(credentials)
-    token.value = result.token
-    localStorage.setItem('admin_token', result.token)
+    token.value = result.data.token
+    localStorage.setItem('admin_token', result.data.token)
     localStorage.setItem('admin_username', credentials.username)
     return result
   }
@@ -22,8 +23,8 @@ export const useUserStore = defineStore('user', () => {
     if (!token.value) return null
     try {
       const result = await getProfile()
-      userInfo.value = result
-      return result
+      userInfo.value = result.data
+      return result.data
     } catch (e) {
       token.value = ''
       localStorage.removeItem('admin_token')
@@ -36,7 +37,11 @@ export const useUserStore = defineStore('user', () => {
     try {
       await logoutApi()
     } catch (e) {
-      console.error('Logout API failed:', e)
+      if (e instanceof ApiError) {
+        console.error('Logout API failed:', e.message)
+      } else {
+        console.error('Logout API failed:', e)
+      }
     } finally {
       token.value = ''
       userInfo.value = null

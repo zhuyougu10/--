@@ -72,6 +72,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { getCourtDetail, createCourt, updateCourt } from '@/api/court'
 import { getVenueList } from '@/api/venue'
+import { ApiError } from '@/utils/request'
 
 const route = useRoute()
 const router = useRouter()
@@ -101,9 +102,13 @@ const rules = {
 const loadVenues = async () => {
   try {
     const result = await getVenueList({ current: 1, size: 100 })
-    venues.value = result.records
+    venues.value = result.data.records
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载球馆列表失败')
+    }
   }
 }
 
@@ -111,9 +116,13 @@ const loadCourt = async () => {
   if (!courtId.value) return
   try {
     const result = await getCourtDetail(courtId.value)
-    Object.assign(formState, result)
+    Object.assign(formState, result.data)
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载场地信息失败')
+    }
   }
 }
 
@@ -129,16 +138,20 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     loading.value = true
     
+    let result
     if (isEdit.value) {
-      await updateCourt(courtId.value, formState)
-      message.success('更新成功')
+      result = await updateCourt(courtId.value, formState)
     } else {
-      await createCourt(formState)
-      message.success('创建成功')
+      result = await createCourt(formState)
     }
+    message.success(result.message || (isEdit.value ? '更新成功' : '创建成功'))
     router.push('/court')
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('提交失败')
+    }
   } finally {
     loading.value = false
   }

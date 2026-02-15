@@ -13,6 +13,8 @@ import com.stadium.booking.repository.CourtRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,14 +53,17 @@ public class VenueService {
 
     @Transactional
     public VenueResponse create(VenueCreateRequest request) {
-        if (venueRepository.findByCode(request.getCode()).isPresent()) {
+        String code = request.getCode();
+        if (code == null || code.trim().isEmpty()) {
+            code = generateVenueCode();
+        } else if (venueRepository.findByCode(code).isPresent()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "球馆编码已存在");
         }
 
         Venue venue = new Venue();
         venue.setCampusId(1L);
         venue.setName(request.getName());
-        venue.setCode(request.getCode());
+        venue.setCode(code);
         venue.setSportType(request.getSportType());
         venue.setLocation(request.getLocation());
         venue.setDescription(request.getDescription());
@@ -123,6 +128,23 @@ public class VenueService {
         Venue venue = venueRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
         venueRepository.deleteById(id);
+    }
+
+    private String generateVenueCode() {
+        String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String prefix = "V" + dateStr;
+        String maxCode = venueRepository.findMaxCodeByPrefix(prefix + "%");
+        
+        int sequence = 1;
+        if (maxCode != null && maxCode.length() >= prefix.length() + 3) {
+            try {
+                sequence = Integer.parseInt(maxCode.substring(prefix.length())) + 1;
+            } catch (NumberFormatException e) {
+                sequence = 1;
+            }
+        }
+        
+        return prefix + String.format("%03d", sequence);
     }
 
     private VenueResponse toResponse(Venue venue) {

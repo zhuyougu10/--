@@ -132,6 +132,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { getUserList, getUserBookings, getUserViolations, updateUserStatus } from '@/api/user'
+import { ApiError } from '@/utils/request'
 
 const loading = ref(false)
 const users = ref([])
@@ -199,10 +200,14 @@ const loadUsers = async () => {
       status: searchParams.status
     }
     const result = await getUserList(params)
-    users.value = result.records
-    pagination.total = result.total
+    users.value = result.data.records
+    pagination.total = result.data.total
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载用户列表失败')
+    }
   } finally {
     loading.value = false
   }
@@ -237,9 +242,11 @@ const loadUserBookings = async (userId) => {
   bookingsLoading.value = true
   try {
     const result = await getUserBookings(userId, { current: 1, size: 10 })
-    userBookings.value = result.records || []
+    userBookings.value = result.data.records || []
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    }
   } finally {
     bookingsLoading.value = false
   }
@@ -249,9 +256,11 @@ const loadUserViolations = async (userId) => {
   violationsLoading.value = true
   try {
     const result = await getUserViolations(userId, { current: 1, size: 10 })
-    userViolations.value = result.records || []
+    userViolations.value = result.data.records || []
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    }
   } finally {
     violationsLoading.value = false
   }
@@ -260,11 +269,15 @@ const loadUserViolations = async (userId) => {
 const handleToggleStatus = async (record) => {
   try {
     const newStatus = record.status === 1 ? 0 : 1
-    await updateUserStatus(record.id, newStatus)
-    message.success('状态更新成功')
+    const result = await updateUserStatus(record.id, newStatus)
+    message.success(result.message || '状态更新成功')
     loadUsers()
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('状态更新失败')
+    }
   }
 }
 

@@ -64,6 +64,7 @@ import { ref, reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import { ScanOutlined } from '@ant-design/icons-vue'
 import { manualCheckin } from '@/api/checkin'
+import { ApiError } from '@/utils/request'
 
 const bookingNo = ref('')
 const resultVisible = ref(false)
@@ -89,18 +90,23 @@ const handleManualCheckin = async () => {
   
   try {
     const result = await manualCheckin(bookingNo.value)
+    const data = result.data
     checkinResult.success = true
-    checkinResult.message = '核销成功'
-    checkinResult.userName = result.userName
-    checkinResult.venueName = result.venueName
-    checkinResult.courtName = result.courtName
-    checkinResult.startTime = result.startTime
-    checkinResult.endTime = result.endTime
+    checkinResult.message = result.message || '核销成功'
+    checkinResult.userName = data.userName
+    checkinResult.venueName = data.venueName
+    checkinResult.courtName = data.courtName
+    checkinResult.startTime = data.startTime
+    checkinResult.endTime = data.endTime
     resultVisible.value = true
     bookingNo.value = ''
   } catch (e) {
     checkinResult.success = false
-    checkinResult.message = e.message || '核销失败'
+    if (e instanceof ApiError) {
+      checkinResult.message = e.message
+    } else {
+      checkinResult.message = '核销失败'
+    }
     resultVisible.value = true
   }
 }

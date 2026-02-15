@@ -52,6 +52,7 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
+import { ApiError } from '@/utils/request'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -64,11 +65,15 @@ const formState = reactive({
 const handleLogin = async () => {
   loading.value = true
   try {
-    await userStore.login(formState)
-    message.success('登录成功')
+    const result = await userStore.login(formState)
+    message.success(result.message || '登录成功')
     router.push('/dashboard')
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('登录失败')
+    }
   } finally {
     loading.value = false
   }

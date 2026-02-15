@@ -104,8 +104,10 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { message } from 'ant-design-vue'
 import { getBookingList } from '@/api/booking'
 import { getVenueList } from '@/api/venue'
+import { ApiError } from '@/utils/request'
 
 const loading = ref(false)
 const bookings = ref([])
@@ -149,9 +151,13 @@ const getStatusColor = (status) => statusMap[status]?.color || 'default'
 const loadVenues = async () => {
   try {
     const result = await getVenueList({ current: 1, size: 100 })
-    venues.value = result.records
+    venues.value = result.data.records
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载球馆列表失败')
+    }
   }
 }
 
@@ -170,10 +176,14 @@ const loadBookings = async () => {
       params.endDate = searchParams.dateRange[1].format('YYYY-MM-DD')
     }
     const result = await getBookingList(params)
-    bookings.value = result.records
-    pagination.total = result.total
+    bookings.value = result.data.records
+    pagination.total = result.data.total
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载预约列表失败')
+    }
   } finally {
     loading.value = false
   }

@@ -22,10 +22,13 @@
             {{ record.status === 1 ? '营业中' : '已关闭' }}
           </a-tag>
         </template>
-        <template v-if="column.key === 'sportTypes'">
-          <a-tag v-for="type in record.sportTypes" :key="type" color="blue">
-            {{ getSportTypeLabel(type) }}
+        <template v-if="column.key === 'sportType'">
+          <a-tag color="blue">
+            {{ getSportTypeLabel(record.sportType) }}
           </a-tag>
+        </template>
+        <template v-if="column.key === 'openHours'">
+          {{ record.openTime }} - {{ record.closeTime }}
         </template>
         <template v-if="column.key === 'action'">
           <a-space>
@@ -58,6 +61,7 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { getVenueList, updateVenueStatus, deleteVenue } from '@/api/venue'
+import { ApiError } from '@/utils/request'
 
 const router = useRouter()
 const loading = ref(false)
@@ -70,8 +74,8 @@ const pagination = reactive({
 
 const columns = [
   { title: '球馆名称', dataIndex: 'name', key: 'name' },
-  { title: '地址', dataIndex: 'address', key: 'address' },
-  { title: '运动类型', key: 'sportTypes' },
+  { title: '位置', dataIndex: 'location', key: 'location' },
+  { title: '运动类型', dataIndex: 'sportType', key: 'sportType' },
   { title: '营业时间', key: 'openHours' },
   { title: '场地数', dataIndex: 'courtCount', key: 'courtCount' },
   { title: '状态', key: 'status' },
@@ -79,11 +83,11 @@ const columns = [
 ]
 
 const sportTypeMap = {
-  1: '羽毛球',
-  2: '篮球',
-  3: '乒乓球',
-  4: '网球',
-  5: '排球'
+  badminton: '羽毛球',
+  basketball: '篮球',
+  table_tennis: '乒乓球',
+  tennis: '网球',
+  volleyball: '排球'
 }
 
 const getSportTypeLabel = (type) => sportTypeMap[type] || type
@@ -95,10 +99,14 @@ const loadVenues = async () => {
       current: pagination.current,
       size: pagination.pageSize
     })
-    venues.value = result.records
-    pagination.total = result.total
+    venues.value = result.data.records
+    pagination.total = result.data.total
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载球馆列表失败')
+    }
   } finally {
     loading.value = false
   }
@@ -117,21 +125,29 @@ const handleEdit = (record) => {
 const handleToggleStatus = async (record) => {
   try {
     const newStatus = record.status === 1 ? 0 : 1
-    await updateVenueStatus(record.id, newStatus)
-    message.success('状态更新成功')
+    const result = await updateVenueStatus(record.id, newStatus)
+    message.success(result.message || '状态更新成功')
     loadVenues()
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('状态更新失败')
+    }
   }
 }
 
 const handleDelete = async (record) => {
   try {
-    await deleteVenue(record.id)
-    message.success('删除成功')
+    const result = await deleteVenue(record.id)
+    message.success(result.message || '删除成功')
     loadVenues()
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('删除失败')
+    }
   }
 }
 

@@ -62,6 +62,7 @@ import { message, Modal } from 'ant-design-vue'
 import { getTodaySchedule } from '@/api/booking'
 import { getVenueList } from '@/api/venue'
 import { manualCheckin, markNoShow } from '@/api/checkin'
+import { ApiError } from '@/utils/request'
 
 const loading = ref(false)
 const bookings = ref([])
@@ -91,18 +92,27 @@ const getStatusColor = (status) => statusMap[status]?.color || 'default'
 const loadVenues = async () => {
   try {
     const result = await getVenueList({ current: 1, size: 100 })
-    venues.value = result.records
+    venues.value = result.data.records
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载球馆列表失败')
+    }
   }
 }
 
 const loadSchedule = async () => {
   loading.value = true
   try {
-    bookings.value = await getTodaySchedule(selectedVenue.value)
+    const result = await getTodaySchedule(selectedVenue.value)
+    bookings.value = result.data
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载今日排场失败')
+    }
   } finally {
     loading.value = false
   }
@@ -114,11 +124,15 @@ const handleCheckin = (record) => {
     content: `确认核销 ${record.userName} 的预约？`,
     async onOk() {
       try {
-        await manualCheckin(record.bookingNo)
-        message.success('核销成功')
+        const result = await manualCheckin(record.bookingNo)
+        message.success(result.message || '核销成功')
         loadSchedule()
       } catch (e) {
-        console.error(e)
+        if (e instanceof ApiError) {
+          message.error(e.message)
+        } else {
+          message.error('核销失败')
+        }
       }
     }
   })
@@ -130,11 +144,15 @@ const handleNoShow = (record) => {
     content: `确认将 ${record.userName} 标记为爽约？`,
     async onOk() {
       try {
-        await markNoShow(record.bookingNo)
-        message.success('已标记爽约')
+        const result = await markNoShow(record.bookingNo)
+        message.success(result.message || '已标记爽约')
         loadSchedule()
       } catch (e) {
-        console.error(e)
+        if (e instanceof ApiError) {
+          message.error(e.message)
+        } else {
+          message.error('标记爽约失败')
+        }
       }
     }
   })

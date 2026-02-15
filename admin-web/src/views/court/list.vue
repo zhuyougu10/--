@@ -70,6 +70,7 @@ import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { getCourtList, updateCourtStatus, deleteCourt } from '@/api/court'
 import { getVenueList } from '@/api/venue'
+import { ApiError } from '@/utils/request'
 
 const router = useRouter()
 const loading = ref(false)
@@ -104,9 +105,13 @@ const getSportTypeLabel = (type) => sportTypeMap[type] || type
 const loadVenues = async () => {
   try {
     const result = await getVenueList({ current: 1, size: 100 })
-    venues.value = result.records
+    venues.value = result.data.records
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载球馆列表失败')
+    }
   }
 }
 
@@ -118,10 +123,14 @@ const loadCourts = async () => {
       size: pagination.pageSize,
       venueId: selectedVenue.value
     })
-    courts.value = result.records
-    pagination.total = result.total
+    courts.value = result.data.records
+    pagination.total = result.data.total
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载场地列表失败')
+    }
   } finally {
     loading.value = false
   }
@@ -140,21 +149,29 @@ const handleEdit = (record) => {
 const handleToggleStatus = async (record) => {
   try {
     const newStatus = record.status === 1 ? 0 : 1
-    await updateCourtStatus(record.id, newStatus)
-    message.success('状态更新成功')
+    const result = await updateCourtStatus(record.id, newStatus)
+    message.success(result.message || '状态更新成功')
     loadCourts()
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('状态更新失败')
+    }
   }
 }
 
 const handleDelete = async (record) => {
   try {
-    await deleteCourt(record.id)
-    message.success('删除成功')
+    const result = await deleteCourt(record.id)
+    message.success(result.message || '删除成功')
     loadCourts()
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('删除失败')
+    }
   }
 }
 

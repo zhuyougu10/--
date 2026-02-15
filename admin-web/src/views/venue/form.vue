@@ -16,21 +16,20 @@
         <a-input v-model:value="formState.name" placeholder="请输入球馆名称" />
       </a-form-item>
       
-      <a-form-item label="地址" name="address">
-        <a-input v-model:value="formState.address" placeholder="请输入地址" />
+      <a-form-item label="位置" name="location">
+        <a-input v-model:value="formState.location" placeholder="请输入位置" />
       </a-form-item>
       
-      <a-form-item label="运动类型" name="sportTypes">
+      <a-form-item label="运动类型" name="sportType">
         <a-select
-          v-model:value="formState.sportTypes"
-          mode="multiple"
+          v-model:value="formState.sportType"
           placeholder="请选择运动类型"
         >
-          <a-select-option :value="1">羽毛球</a-select-option>
-          <a-select-option :value="2">篮球</a-select-option>
-          <a-select-option :value="3">乒乓球</a-select-option>
-          <a-select-option :value="4">网球</a-select-option>
-          <a-select-option :value="5">排球</a-select-option>
+          <a-select-option value="badminton">羽毛球</a-select-option>
+          <a-select-option value="basketball">篮球</a-select-option>
+          <a-select-option value="table_tennis">乒乓球</a-select-option>
+          <a-select-option value="tennis">网球</a-select-option>
+          <a-select-option value="volleyball">排球</a-select-option>
         </a-select>
       </a-form-item>
       
@@ -85,10 +84,6 @@
         <span class="form-hint">每人每天最多预约时段数</span>
       </a-form-item>
       
-      <a-form-item label="联系电话" name="phone">
-        <a-input v-model:value="formState.phone" placeholder="请输入联系电话" />
-      </a-form-item>
-      
       <a-form-item label="简介" name="description">
         <a-textarea
           v-model:value="formState.description"
@@ -115,6 +110,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { getVenueDetail, createVenue, updateVenue } from '@/api/venue'
+import { ApiError } from '@/utils/request'
 
 const route = useRoute()
 const router = useRouter()
@@ -126,22 +122,20 @@ const venueId = computed(() => route.params.id)
 
 const formState = reactive({
   name: '',
-  address: '',
-  sportTypes: [],
+  location: '',
+  sportType: undefined,
   openTime: null,
   closeTime: null,
   slotMinutes: 60,
   bookAheadDays: 7,
   cancelCutoffMinutes: 30,
   dailySlotLimit: 2,
-  phone: '',
   description: ''
 })
 
 const rules = {
   name: [{ required: true, message: '请输入球馆名称' }],
-  address: [{ required: true, message: '请输入地址' }],
-  sportTypes: [{ required: true, message: '请选择运动类型' }],
+  sportType: [{ required: true, message: '请选择运动类型' }],
   openTime: [{ required: true, message: '请选择开馆时间' }],
   closeTime: [{ required: true, message: '请选择闭馆时间' }]
 }
@@ -150,13 +144,18 @@ const loadVenue = async () => {
   if (!venueId.value) return
   try {
     const result = await getVenueDetail(venueId.value)
+    const data = result.data
     Object.assign(formState, {
-      ...result,
-      openTime: result.openTime ? dayjs(result.openTime, 'HH:mm') : null,
-      closeTime: result.closeTime ? dayjs(result.closeTime, 'HH:mm') : null
+      ...data,
+      openTime: data.openTime ? dayjs(data.openTime, 'HH:mm') : null,
+      closeTime: data.closeTime ? dayjs(data.closeTime, 'HH:mm') : null
     })
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('加载球馆信息失败')
+    }
   }
 }
 
@@ -171,16 +170,20 @@ const handleSubmit = async () => {
       closeTime: formState.closeTime ? dayjs(formState.closeTime).format('HH:mm') : null
     }
     
+    let result
     if (isEdit.value) {
-      await updateVenue(venueId.value, data)
-      message.success('更新成功')
+      result = await updateVenue(venueId.value, data)
     } else {
-      await createVenue(data)
-      message.success('创建成功')
+      result = await createVenue(data)
     }
+    message.success(result.message || (isEdit.value ? '更新成功' : '创建成功'))
     router.push('/venue')
   } catch (e) {
-    console.error(e)
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('提交失败')
+    }
   } finally {
     loading.value = false
   }
