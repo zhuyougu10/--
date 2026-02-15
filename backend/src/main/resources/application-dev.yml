@@ -17,8 +17,8 @@ jwt:
   refresh-expiration: 604800000
 
 wechat:
-  appid: your_wechat_appid
-  secret: your_wechat_secret
+  appid: wx66f9a3572d9e02ee
+  secret: 3764436905a850c868c20079bf6a7d4c
 
 logging:
   level:

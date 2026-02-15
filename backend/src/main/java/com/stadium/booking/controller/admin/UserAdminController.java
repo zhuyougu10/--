@@ -46,7 +46,7 @@ public class UserAdminController {
     @GetMapping("/{id}/bookings")
     @RequirePermission("user:read")
     public Result<List<BookingResponse>> getUserBookings(@PathVariable Long id) {
-        return Result.success(bookingService.getUserBookings(id));
+        return Result.success(bookingService.getUserBookings(id, null));
     }
 
     @Operation(summary = "获取用户违约记录")

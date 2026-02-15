@@ -20,9 +20,10 @@ export const getBookingDetail = (bookingNo) => {
   })
 }
 
-export const cancelBooking = (bookingNo) => {
+export const cancelBooking = (bookingNo, reason) => {
   return request({
     url: `/admin/bookings/${bookingNo}/cancel`,
-    method: 'POST'
+    method: 'POST',
+    params: { reason }
   })
 }

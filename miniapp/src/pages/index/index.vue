@@ -18,7 +18,9 @@
           <text class="venue-name">{{ venue.name }}</text>
           <text class="venue-location">{{ venue.location }}</text>
           <view class="venue-meta">
-            <text class="sport-type">{{ getSportTypeName(venue.sportType) }}</text>
+            <view class="sport-types">
+              <text v-for="type in getSportTypes(venue.sportType)" :key="type" class="sport-type">{{ getSportTypeName(type) }}</text>
+            </view>
             <text class="open-time">{{ venue.openTime }} - {{ venue.closeTime }}</text>
           </view>
         </view>
@@ -41,6 +43,11 @@ import { useVenue, useSportType } from '@/composables/useVenue'
 
 const { venues, loading, loadVenues } = useVenue()
 const { getSportTypeName } = useSportType()
+
+const getSportTypes = (sportType: string) => {
+  if (!sportType) return []
+  return sportType.split(',').filter(t => t.trim())
+}
 
 onShow(() => {
   loadVenues()
@@ -121,7 +128,14 @@ const goToVenue = (id: number) => {
 .venue-meta {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-top: 16rpx;
+}
+
+.sport-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
 }
 
 .sport-type {

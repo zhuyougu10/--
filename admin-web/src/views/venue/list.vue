@@ -23,8 +23,8 @@
           </a-tag>
         </template>
         <template v-if="column.key === 'sportType'">
-          <a-tag color="blue">
-            {{ getSportTypeLabel(record.sportType) }}
+          <a-tag v-for="type in getSportTypes(record.sportType)" :key="type" color="blue" style="margin: 2px;">
+            {{ getSportTypeLabel(type) }}
           </a-tag>
         </template>
         <template v-if="column.key === 'openHours'">
@@ -91,6 +91,11 @@ const sportTypeMap = {
 }
 
 const getSportTypeLabel = (type) => sportTypeMap[type] || type
+
+const getSportTypes = (sportType) => {
+  if (!sportType) return []
+  return sportType.split(',').filter(t => t.trim())
+}
 
 const loadVenues = async () => {
   loading.value = true

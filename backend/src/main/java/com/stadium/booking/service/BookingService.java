@@ -141,8 +141,17 @@ public class BookingService {
         return toResponse(booking);
     }
 
-    public List<BookingResponse> getUserBookings(Long userId) {
-        return bookingRepository.findByUserId(userId).stream()
+    public List<BookingResponse> getUserBookings(Long userId, Integer status) {
+        LambdaQueryWrapper<Booking> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Booking::getUserId, userId);
+        
+        if (status != null) {
+            wrapper.eq(Booking::getStatus, status);
+        }
+        
+        wrapper.orderByDesc(Booking::getCreatedAt);
+        
+        return bookingRepository.selectList(wrapper).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }

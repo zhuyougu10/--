@@ -4,10 +4,23 @@ const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
     
+    let url = BASE_URL + options.url
+    let data = options.data
+    
+    if (options.params && Object.keys(options.params).length > 0) {
+      const queryString = Object.entries(options.params)
+        .filter(([_, value]) => value !== undefined && value !== null)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&')
+      if (queryString) {
+        url += `?${queryString}`
+      }
+    }
+    
     uni.request({
-      url: BASE_URL + options.url,
+      url,
       method: options.method || 'GET',
-      data: options.data,
+      data,
       header: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : '',

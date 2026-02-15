@@ -11,7 +11,9 @@
     <view class="venue-info card">
       <view class="info-row">
         <text class="label">运动类型</text>
-        <text class="value">{{ getSportTypeName(currentVenue?.sportType || '') }}</text>
+        <view class="sport-types">
+          <text v-for="type in getSportTypes(currentVenue?.sportType || '')" :key="type" class="sport-tag">{{ getSportTypeName(type) }}</text>
+        </view>
       </view>
       <view class="info-row">
         <text class="label">营业时间</text>
@@ -69,6 +71,11 @@ import type { Court } from '@/types'
 const venueId = ref<number>(0)
 const { currentVenue, loadVenueDetail } = useVenue()
 const { getSportTypeName } = useSportType()
+
+const getSportTypes = (sportType: string) => {
+  if (!sportType) return []
+  return sportType.split(',').filter(t => t.trim())
+}
 
 onLoad((options) => {
   if (options?.id) {
@@ -161,6 +168,21 @@ const goToBooking = (court: Court) => {
 
 .text-success {
   color: #52c41a;
+}
+
+.sport-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  justify-content: flex-end;
+}
+
+.sport-tag {
+  font-size: 24rpx;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
 }
 
 .section-title {

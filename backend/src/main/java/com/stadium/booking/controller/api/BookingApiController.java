@@ -50,12 +50,13 @@ public class BookingApiController {
 
     @Operation(summary = "获取我的预约列表")
     @GetMapping("/my")
-    public Result<List<BookingResponse>> getMyBookings() {
+    public Result<List<BookingResponse>> getMyBookings(
+            @RequestParam(required = false) Integer status) {
         Long userId = UserContext.getCurrentUserId();
         if (userId == null) {
             return Result.error(401, "请先登录");
         }
-        return Result.success(bookingService.getUserBookings(userId));
+        return Result.success(bookingService.getUserBookings(userId, status));
     }
 
     @Operation(summary = "获取我的有效预约")

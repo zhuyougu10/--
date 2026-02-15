@@ -23,6 +23,7 @@
       <a-form-item label="运动类型" name="sportType">
         <a-select
           v-model:value="formState.sportType"
+          mode="multiple"
           placeholder="请选择运动类型"
         >
           <a-select-option value="badminton">羽毛球</a-select-option>
@@ -123,7 +124,7 @@ const venueId = computed(() => route.params.id)
 const formState = reactive({
   name: '',
   location: '',
-  sportType: undefined,
+  sportType: [],
   openTime: null,
   closeTime: null,
   slotMinutes: 60,
@@ -147,6 +148,7 @@ const loadVenue = async () => {
     const data = result.data
     Object.assign(formState, {
       ...data,
+      sportType: data.sportType ? data.sportType.split(',') : [],
       openTime: data.openTime ? dayjs(data.openTime, 'HH:mm') : null,
       closeTime: data.closeTime ? dayjs(data.closeTime, 'HH:mm') : null
     })
@@ -166,6 +168,7 @@ const handleSubmit = async () => {
     
     const data = {
       ...formState,
+      sportType: Array.isArray(formState.sportType) ? formState.sportType.join(',') : formState.sportType,
       openTime: formState.openTime ? dayjs(formState.openTime).format('HH:mm') : null,
       closeTime: formState.closeTime ? dayjs(formState.closeTime).format('HH:mm') : null
     }

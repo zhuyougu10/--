@@ -15,6 +15,6 @@ export const getVenueDetail = (id) => {
 export const getTimeSlots = (venueId, courtId, date) => {
   return request({
     url: `/venues/${venueId}/courts/${courtId}/slots`,
-    data: { date }
+    params: { date }
   })
 }

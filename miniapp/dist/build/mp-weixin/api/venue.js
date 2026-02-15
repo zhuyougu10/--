@@ -1,1 +1,0 @@
-"use strict";const e=require("../utils/request.js");exports.getTimeSlots=(t,s,u)=>e.request({url:`/venues/${t}/courts/${s}/slots`,data:{date:u}}),exports.getVenueDetail=t=>e.request({url:`/venues/${t}`}),exports.getVenueList=()=>e.request({url:"/venues"});

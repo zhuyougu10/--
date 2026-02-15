@@ -29,11 +29,11 @@ export const updateCourt = (id, data) => {
   })
 }
 
-export const updateCourtStatus = (id, status) => {
+export const updateCourtStatus = (id, status, reason) => {
   return request({
     url: `/admin/courts/${id}/status`,
     method: 'PATCH',
-    params: { status }
+    params: { status, reason }
   })
 }
 

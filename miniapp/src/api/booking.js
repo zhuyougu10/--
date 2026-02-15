@@ -25,7 +25,7 @@ export const getBookingDetail = (bookingNo) => {
 export const getMyBookings = (status) => {
   return request({
     url: '/bookings/my',
-    data: status ? { status } : {}
+    params: status ? { status } : {}
   })
 }
 
