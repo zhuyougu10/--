@@ -35,11 +35,22 @@ public class BookingAdminController {
         return Result.success(bookingService.listPage(current, size, venueId, courtId, userId, date, status));
     }
 
-    @Operation(summary = "获取预约详情")
-    @GetMapping("/{id}")
+    @Operation(summary = "获取今日预约")
+    @GetMapping("/today")
     @RequirePermission("booking:read")
-    public Result<BookingResponse> getById(@PathVariable Long id) {
-        return Result.success(bookingService.getBookingById(id));
+    public Result<List<BookingResponse>> getTodayBookings(
+            @RequestParam(required = false) Long venueId) {
+        return Result.success(bookingService.getTodayBookings(venueId));
+    }
+
+    @Operation(summary = "获取预约详情")
+    @GetMapping("/{bookingNoOrId}")
+    @RequirePermission("booking:read")
+    public Result<BookingResponse> getById(@PathVariable String bookingNoOrId) {
+        if (bookingNoOrId.startsWith("BK")) {
+            return Result.success(bookingService.getBookingByNo(bookingNoOrId));
+        }
+        return Result.success(bookingService.getBookingById(Long.parseLong(bookingNoOrId)));
     }
 
     @Operation(summary = "获取球馆当日预约")

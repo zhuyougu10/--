@@ -1,5 +1,8 @@
 package com.stadium.booking.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.stadium.booking.common.exception.BusinessException;
 import com.stadium.booking.common.result.ErrorCode;
 import com.stadium.booking.dto.request.CourtCreateRequest;
@@ -24,6 +27,21 @@ public class CourtService {
         return courtRepository.findByVenueId(venueId).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
+    }
+
+    public IPage<CourtResponse> listPage(Integer current, Integer size, Long venueId, Integer status) {
+        LambdaQueryWrapper<Court> wrapper = new LambdaQueryWrapper<>();
+        
+        if (venueId != null) {
+            wrapper.eq(Court::getVenueId, venueId);
+        }
+        if (status != null) {
+            wrapper.eq(Court::getStatus, status);
+        }
+        wrapper.orderByAsc(Court::getSortOrder);
+        
+        IPage<Court> page = courtRepository.selectPage(new Page<>(current, size), wrapper);
+        return page.convert(this::toResponse);
     }
 
     public CourtResponse getById(Long id) {

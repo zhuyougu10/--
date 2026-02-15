@@ -159,10 +159,22 @@ public class BookingService {
             .collect(Collectors.toList());
     }
 
+    public List<BookingResponse> getTodayBookings(Long venueId) {
+        LocalDate today = LocalDate.now();
+        if (venueId != null) {
+            return getVenueBookings(venueId, today);
+        }
+        LambdaQueryWrapper<Booking> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Booking::getBookingDate, today)
+               .orderByAsc(Booking::getStartTime);
+        return bookingRepository.selectList(wrapper).stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
     public IPage<BookingResponse> listPage(Integer current, Integer size, Long venueId, 
             Long courtId, Long userId, LocalDate date, Integer status) {
         LambdaQueryWrapper<Booking> wrapper = new LambdaQueryWrapper<>();
-        wrapper.isNull(Booking::getDeletedAt);
         
         if (venueId != null) {
             wrapper.eq(Booking::getVenueId, venueId);

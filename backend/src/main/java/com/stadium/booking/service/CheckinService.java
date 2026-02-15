@@ -1,6 +1,9 @@
 package com.stadium.booking.service;
 
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.stadium.booking.common.exception.BusinessException;
 import com.stadium.booking.common.result.ErrorCode;
 import com.stadium.booking.dto.request.CheckinRequest;
@@ -20,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -33,6 +37,24 @@ public class CheckinService {
     private final AuditService auditService;
 
     private static final int QR_TOKEN_VALID_MINUTES = 5;
+
+    public IPage<CheckinResponse> listRecords(Integer current, Integer size, Long venueId, LocalDate date) {
+        LambdaQueryWrapper<CheckinRecord> wrapper = new LambdaQueryWrapper<>();
+        
+        if (venueId != null) {
+            wrapper.eq(CheckinRecord::getVenueId, venueId);
+        }
+        if (date != null) {
+            wrapper.apply("DATE(checked_in_at) = {0}", date);
+        }
+        wrapper.orderByDesc(CheckinRecord::getCheckedInAt);
+
+        IPage<CheckinRecord> page = checkinRecordRepository.selectPage(new Page<>(current, size), wrapper);
+        return page.convert(record -> {
+            Booking booking = bookingRepository.findById(record.getBookingId()).orElse(null);
+            return buildCheckinResponse(booking != null ? booking : new Booking(), true, "已核销");
+        });
+    }
 
     public QrCodeResponse generateQrToken(Long userId, String bookingNo) {
         Booking booking = bookingRepository.findByBookingNo(bookingNo)

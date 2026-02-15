@@ -46,6 +46,6 @@ export const deleteCourt = (id) => {
 
 export const getCourtsByVenue = (venueId) => {
   return request({
-    url: `/admin/venues/${venueId}/courts`
+    url: `/admin/courts/venue/${venueId}`
   })
 }

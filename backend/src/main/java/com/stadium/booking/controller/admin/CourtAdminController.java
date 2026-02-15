@@ -1,5 +1,6 @@
 package com.stadium.booking.controller.admin;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stadium.booking.common.result.Result;
 import com.stadium.booking.dto.request.CourtCreateRequest;
 import com.stadium.booking.dto.response.CourtResponse;
@@ -19,8 +20,19 @@ import java.util.List;
 public class CourtAdminController {
     private final CourtService courtService;
 
+    @Operation(summary = "分页查询场地")
+    @GetMapping
+    @RequirePermission("court:read")
+    public Result<IPage<CourtResponse>> list(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Long venueId,
+            @RequestParam(required = false) Integer status) {
+        return Result.success(courtService.listPage(current, size, venueId, status));
+    }
+
     @Operation(summary = "获取球馆下的场地列表")
-    @GetMapping("/venue/{venueId}")
+    @GetMapping({"/venue/{venueId}", "/by-venue/{venueId}"})
     @RequirePermission("court:read")
     public Result<List<CourtResponse>> listByVenue(@PathVariable Long venueId) {
         return Result.success(courtService.listByVenue(venueId));
