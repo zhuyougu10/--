@@ -42,7 +42,7 @@
         >
           <view class="court-info">
             <text class="court-name">{{ court.name }}</text>
-            <text class="court-type">{{ court.indoor ? '室内' : '室外' }}</text>
+            <text class="court-type">{{ court.courtNo ? court.courtNo + '号场' : '' }}</text>
           </view>
           <view class="court-status">
             <text class="status-tag" :class="{ available: court.status === 1 }">

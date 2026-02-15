@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.stadium.booking.common.exception.BusinessException;
 import com.stadium.booking.common.result.ErrorCode;
 import com.stadium.booking.dto.request.VenueCreateRequest;
+import com.stadium.booking.dto.response.CourtResponse;
 import com.stadium.booking.dto.response.VenueResponse;
 import com.stadium.booking.entity.Venue;
 import com.stadium.booking.repository.VenueRepository;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class VenueService {
     private final VenueRepository venueRepository;
     private final CourtRepository courtRepository;
+    private final CourtService courtService;
 
     public List<VenueResponse> listAll() {
         return venueRepository.findAllActive().stream()
@@ -48,7 +50,7 @@ public class VenueService {
     public VenueResponse getById(Long id) {
         Venue venue = venueRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
-        return toResponse(venue);
+        return toDetailResponse(venue);
     }
 
     @Transactional
@@ -165,6 +167,13 @@ public class VenueService {
         response.setDailySlotLimit(venue.getDailySlotLimit());
         response.setStatus(venue.getStatus());
         response.setCourtCount(courtRepository.countByVenueId(venue.getId()));
+        return response;
+    }
+
+    private VenueResponse toDetailResponse(Venue venue) {
+        VenueResponse response = toResponse(venue);
+        List<CourtResponse> courts = courtService.listByVenue(venue.getId());
+        response.setCourts(courts);
         return response;
     }
 }

@@ -28,10 +28,6 @@
         <a-input v-model:value="formState.name" placeholder="请输入场地名称" />
       </a-form-item>
       
-      <a-form-item label="场地编号" name="courtCode">
-        <a-input v-model:value="formState.courtCode" placeholder="请输入场地编号" />
-      </a-form-item>
-      
       <a-form-item label="运动类型" name="sportType">
         <a-select v-model:value="formState.sportType" placeholder="请选择运动类型">
           <a-select-option :value="1">羽毛球</a-select-option>
@@ -86,7 +82,6 @@ const courtId = computed(() => route.params.id)
 const formState = reactive({
   venueId: null,
   name: '',
-  courtCode: '',
   sportType: null,
   isIndoor: true,
   remark: ''
@@ -95,7 +90,6 @@ const formState = reactive({
 const rules = {
   venueId: [{ required: true, message: '请选择球馆' }],
   name: [{ required: true, message: '请输入场地名称' }],
-  courtCode: [{ required: true, message: '请输入场地编号' }],
   sportType: [{ required: true, message: '请选择运动类型' }]
 }
 

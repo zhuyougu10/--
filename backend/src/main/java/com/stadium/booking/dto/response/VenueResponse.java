@@ -2,6 +2,7 @@ package com.stadium.booking.dto.response;
 
 import lombok.Data;
 import java.time.LocalTime;
+import java.util.List;
 
 @Data
 public class VenueResponse {
@@ -21,4 +22,5 @@ public class VenueResponse {
     private Integer dailySlotLimit;
     private Integer status;
     private Integer courtCount;
+    private List<CourtResponse> courts;
 }

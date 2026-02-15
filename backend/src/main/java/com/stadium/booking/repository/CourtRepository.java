@@ -20,4 +20,10 @@ public interface CourtRepository extends BaseMapper<Court> {
 
     @Select("SELECT COUNT(*) FROM court WHERE venue_id = #{venueId} AND deleted_at IS NULL")
     int countByVenueId(Long venueId);
+
+    @Select("SELECT MAX(court_no) FROM court WHERE venue_id = #{venueId}")
+    String findMaxCourtNoByVenueId(Long venueId);
+
+    @Select("SELECT * FROM court WHERE venue_id = #{venueId} AND name = #{name} AND deleted_at IS NULL LIMIT 1")
+    Optional<Court> findByVenueIdAndName(Long venueId, String name);
 }

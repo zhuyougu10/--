@@ -26,17 +26,19 @@
         <view class="legend">
           <text class="legend-item free">可预约</text>
           <text class="legend-item occupied">已占用</text>
+          <text class="legend-item closed">已关闭</text>
         </view>
       </view>
       
       <view class="slots-grid">
         <view 
           class="slot-item"
-          v-for="slot in slots" 
+          v-for="slot in availableSlots" 
           :key="slot.startTime"
           :class="{ 
             free: slot.status === 'free',
             occupied: slot.status === 'occupied',
+            closed: slot.status === 'closed',
             selected: isSelected(slot)
           }"
           @click="toggleSlot(slot)"
@@ -82,6 +84,10 @@ const { submitting, submitBooking: doSubmitBooking } = useBooking()
 const dateList = computed(() => generateDateList(7))
 const selectedDate = ref('')
 const selectedSlots = ref<TimeSlot[]>([])
+
+const availableSlots = computed(() => 
+  slots.value.filter(slot => slot.status !== 'past')
+)
 
 const court = computed<Court | undefined>(() => 
   currentVenue.value?.courts?.find(c => c.id === courtId.value)
@@ -243,6 +249,11 @@ const submitBooking = async () => {
   color: #999;
 }
 
+.legend-item.closed {
+  background: #fff2f0;
+  color: #ff4d4f;
+}
+
 .slots-grid {
   display: flex;
   flex-wrap: wrap;
@@ -264,6 +275,11 @@ const submitBooking = async () => {
 .slot-item.occupied {
   background: #f5f5f5;
   color: #999;
+}
+
+.slot-item.closed {
+  background: #fff2f0;
+  color: #ff4d4f;
 }
 
 .slot-item.selected {

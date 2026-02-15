@@ -55,10 +55,16 @@ public class CourtService {
         Venue venue = venueRepository.findById(request.getVenueId())
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
 
+        if (courtRepository.findByVenueIdAndName(request.getVenueId(), request.getName()).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "该球馆下已存在同名场地");
+        }
+
+        String courtNo = generateCourtNo(request.getVenueId());
+
         Court court = new Court();
         court.setVenueId(request.getVenueId());
         court.setName(request.getName());
-        court.setCourtNo(request.getCourtNo());
+        court.setCourtNo(courtNo);
         court.setSportType(request.getSportType() != null ? request.getSportType() : venue.getSportType());
         court.setFloorType(request.getFloorType());
         court.setFeatures(request.getFeatures());
@@ -99,6 +105,21 @@ public class CourtService {
         Court court = courtRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "场地不存在"));
         courtRepository.deleteById(id);
+    }
+
+    private String generateCourtNo(Long venueId) {
+        String maxCourtNo = courtRepository.findMaxCourtNoByVenueId(venueId);
+        
+        int sequence = 1;
+        if (maxCourtNo != null && !maxCourtNo.isEmpty()) {
+            try {
+                sequence = Integer.parseInt(maxCourtNo) + 1;
+            } catch (NumberFormatException e) {
+                sequence = courtRepository.countByVenueId(venueId) + 1;
+            }
+        }
+        
+        return String.format("%03d", sequence);
     }
 
     private CourtResponse toResponse(Court court) {

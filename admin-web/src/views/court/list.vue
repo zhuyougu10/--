@@ -87,7 +87,7 @@ const columns = [
   { title: '场地名称', dataIndex: 'name', key: 'name' },
   { title: '所属球馆', dataIndex: 'venueName', key: 'venueName' },
   { title: '运动类型', key: 'sportType' },
-  { title: '场地编号', dataIndex: 'courtCode', key: 'courtCode' },
+  { title: '场地编号', dataIndex: 'courtNo', key: 'courtNo' },
   { title: '状态', key: 'status' },
   { title: '操作', key: 'action', width: 200 }
 ]

@@ -48,8 +48,17 @@ public class TimeSlotService {
         List<CourtClosure> closures = courtClosureRepository.findOverlapping(courtId, slotStart, slotEnd);
 
         boolean isAdmin = UserContext.isCurrentUserAdmin();
+        LocalDateTime now = LocalDateTime.now();
+        boolean isToday = date.equals(LocalDate.now());
 
         for (TimeSlotResponse slot : slots) {
+            LocalDateTime slotDateTime = date.atTime(slot.getStartTime());
+            
+            if (isToday && !slotDateTime.isAfter(now)) {
+                slot.setStatus("past");
+                continue;
+            }
+            
             String key = slot.getStartTime().toString();
             if (bookingMap.containsKey(key)) {
                 Booking booking = bookingMap.get(key);
