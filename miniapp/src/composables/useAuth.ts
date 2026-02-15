@@ -29,11 +29,17 @@ export function useAuth() {
       userInfo.value = {
         id: result.userId,
         userType: result.userType === 'STUDENT' ? 0 : result.userType === 'TEACHER' ? 1 : 2,
-        userTypeText: result.userType
+        userTypeText: result.userType,
+        isBound: result.isBound ? 1 : 0
       }
       
       uni.setStorageSync('token', result.token)
       uni.setStorageSync('userInfo', userInfo.value)
+      
+      if (result.needBind) {
+        uni.navigateTo({ url: '/pages/bind/bind' })
+        return true
+      }
       
       if (result.isNewUser) {
         uni.showToast({ title: '欢迎新用户', icon: 'success' })

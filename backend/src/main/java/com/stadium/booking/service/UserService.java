@@ -6,12 +6,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.stadium.booking.common.exception.BusinessException;
 import com.stadium.booking.common.result.ErrorCode;
 import com.stadium.booking.dto.request.UserProfileUpdateRequest;
+import com.stadium.booking.dto.request.BindStudentNoRequest;
 import com.stadium.booking.dto.response.UserResponse;
 import com.stadium.booking.entity.User;
 import com.stadium.booking.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -73,12 +75,43 @@ public class UserService {
         return getUserDetail(userId);
     }
 
+    @Transactional
+    public UserResponse bindStudentNo(Long userId, BindStudentNoRequest request) {
+        User currentUser = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
+
+        if (currentUser.getIsBound() != null && currentUser.getIsBound() == 1) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "您已绑定工号/学号，无需重复绑定");
+        }
+
+        User presetUser = userRepository.findUnboundByStudentNo(request.getStudentNo())
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "工号/学号不存在或已被绑定"));
+
+        if (!presetUser.getName().equals(request.getName())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "姓名与工号/学号不匹配");
+        }
+
+        currentUser.setStudentNo(presetUser.getStudentNo());
+        currentUser.setName(presetUser.getName());
+        currentUser.setUserType(presetUser.getUserType());
+        currentUser.setIsBound(1);
+        currentUser.setBoundAt(LocalDateTime.now());
+        userRepository.updateById(currentUser);
+
+        if (presetUser.getId() != null && !presetUser.getId().equals(userId)) {
+            userRepository.deleteById(presetUser.getId());
+        }
+
+        return getUserDetail(userId);
+    }
+
     private UserResponse toResponse(User user) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
         response.setName(user.getName());
         response.setPhone(user.getPhone());
         response.setAvatar(user.getAvatar());
+        response.setStudentNo(user.getStudentNo());
         response.setUserType(user.getUserType());
         response.setUserTypeText(getUserTypeText(user.getUserType()));
         response.setStatus(user.getStatus());
@@ -86,6 +119,7 @@ public class UserService {
         response.setNoShowCount(user.getNoShowCount());
         response.setLastNoShowAt(user.getLastNoShowAt());
         response.setBannedUntil(user.getBannedUntil());
+        response.setIsBound(user.getIsBound());
         response.setCreatedAt(user.getCreatedAt());
         return response;
     }

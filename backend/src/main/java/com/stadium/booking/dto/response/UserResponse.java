@@ -9,6 +9,7 @@ public class UserResponse {
     private String name;
     private String phone;
     private String avatar;
+    private String studentNo;
     private Integer userType;
     private String userTypeText;
     private Integer status;
@@ -16,5 +17,6 @@ public class UserResponse {
     private Integer noShowCount;
     private LocalDateTime lastNoShowAt;
     private LocalDateTime bannedUntil;
+    private Integer isBound;
     private LocalDateTime createdAt;
 }

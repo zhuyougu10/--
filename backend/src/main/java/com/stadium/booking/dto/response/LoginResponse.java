@@ -9,4 +9,6 @@ public class LoginResponse {
     private Long userId;
     private String userType;
     private Boolean isNewUser;
+    private Boolean isBound;
+    private Boolean needBind;
 }

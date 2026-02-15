@@ -50,12 +50,17 @@ public class AuthService {
         String token = jwtUtils.generateToken(user.getId(), "USER", false);
         String refreshToken = jwtUtils.generateRefreshToken(user.getId());
 
+        boolean isBound = user.getIsBound() != null && user.getIsBound() == 1;
+        boolean needBind = !isBound && user.getStudentNo() == null;
+
         LoginResponse response = new LoginResponse();
         response.setToken(token);
         response.setRefreshToken(refreshToken);
         response.setUserId(user.getId());
         response.setUserType("USER");
         response.setIsNewUser(user.getName() == null);
+        response.setIsBound(isBound);
+        response.setNeedBind(needBind);
         return response;
     }
 

@@ -2,6 +2,7 @@ package com.stadium.booking.controller.api;
 
 import com.stadium.booking.common.result.Result;
 import com.stadium.booking.dto.request.UserProfileUpdateRequest;
+import com.stadium.booking.dto.request.BindStudentNoRequest;
 import com.stadium.booking.dto.response.UserResponse;
 import com.stadium.booking.security.UserContext;
 import com.stadium.booking.service.UserService;
@@ -36,5 +37,15 @@ public class UserController {
             return Result.error(401, "请先登录");
         }
         return Result.success(userService.updateProfile(userId, request));
+    }
+
+    @Operation(summary = "绑定工号/学号")
+    @PostMapping("/bind")
+    public Result<UserResponse> bindStudentNo(@Valid @RequestBody BindStudentNoRequest request) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "请先登录");
+        }
+        return Result.success(userService.bindStudentNo(userId, request));
     }
 }

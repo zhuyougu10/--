@@ -13,4 +13,10 @@ public interface UserRepository extends BaseMapper<User> {
 
     @Select("SELECT * FROM user WHERE id = #{id} AND deleted_at IS NULL")
     Optional<User> findById(Long id);
+
+    @Select("SELECT * FROM user WHERE student_no = #{studentNo} AND deleted_at IS NULL")
+    Optional<User> findByStudentNo(String studentNo);
+
+    @Select("SELECT * FROM user WHERE student_no = #{studentNo} AND is_bound = 0 AND deleted_at IS NULL")
+    Optional<User> findUnboundByStudentNo(String studentNo);
 }

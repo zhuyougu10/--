@@ -125,11 +125,31 @@ const toggleSlot = (slot: TimeSlot) => {
   } else {
     selectedSlots.value.push(slot)
     selectedSlots.value.sort((a, b) => a.startTime.localeCompare(b.startTime))
+    
+    if (selectedSlots.value.length >= 2) {
+      const minStartTime = selectedSlots.value[0].startTime
+      const maxStartTime = selectedSlots.value[selectedSlots.value.length - 1].startTime
+      
+      const slotsInRange = availableSlots.value.filter(s => 
+        s.status === 'free' && 
+        s.startTime > minStartTime && 
+        s.startTime < maxStartTime &&
+        !selectedSlots.value.some(sel => sel.startTime === s.startTime)
+      )
+      
+      selectedSlots.value.push(...slotsInRange)
+      selectedSlots.value.sort((a, b) => a.startTime.localeCompare(b.startTime))
+    }
   }
 }
 
 const isSelected = (slot: TimeSlot): boolean => {
-  return selectedSlots.value.some(s => s.startTime === slot.startTime)
+  if (selectedSlots.value.length === 0) return false
+  
+  const minStartTime = selectedSlots.value[0].startTime
+  const maxEndTime = selectedSlots.value[selectedSlots.value.length - 1].endTime
+  
+  return slot.startTime >= minStartTime && slot.startTime < maxEndTime
 }
 
 const submitBooking = async () => {

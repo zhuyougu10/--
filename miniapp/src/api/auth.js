@@ -21,3 +21,11 @@ export const getUserProfile = () => {
     url: '/user/profile'
   })
 }
+
+export const bindStudentNo = (data) => {
+  return request({
+    url: '/user/bind',
+    method: 'POST',
+    data
+  })
+}

@@ -20,4 +20,6 @@ public class User extends BaseEntity {
     private LocalDateTime bannedUntil;
     private Integer noShowCount;
     private LocalDateTime lastNoShowAt;
+    private Integer isBound;
+    private LocalDateTime boundAt;
 }

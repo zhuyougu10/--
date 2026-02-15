@@ -75,8 +75,8 @@ public class TimeSlotService {
 
     private Booking findOverlappingBooking(List<Booking> bookings, TimeSlotResponse slot) {
         for (Booking booking : bookings) {
-            if (!booking.getStartTime().isAfter(slot.getEndTime()) && 
-                !booking.getEndTime().isBefore(slot.getStartTime())) {
+            if (booking.getStartTime().isBefore(slot.getEndTime()) && 
+                booking.getEndTime().isAfter(slot.getStartTime())) {
                 return booking;
             }
         }

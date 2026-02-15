@@ -1,0 +1,3 @@
+ALTER TABLE user MODIFY COLUMN openid VARCHAR(100) NULL COMMENT '微信openid';
+ALTER TABLE user ADD COLUMN is_bound TINYINT DEFAULT 0 COMMENT '是否已绑定工号/学号: 0-未绑定, 1-已绑定';
+ALTER TABLE user ADD COLUMN bound_at DATETIME COMMENT '绑定时间';
