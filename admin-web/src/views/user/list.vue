@@ -80,16 +80,18 @@
       width="700px"
     >
       <a-descriptions :column="2" bordered v-if="currentUser">
-        <a-descriptions-item label="用户ID">{{ currentUser.id }}</a-descriptions-item>
+        <a-descriptions-item label="工号/学号">{{ currentUser.studentNo || '-' }}</a-descriptions-item>
         <a-descriptions-item label="状态">
           <a-tag :color="currentUser.status === 1 ? 'green' : 'red'">
             {{ currentUser.status === 1 ? '正常' : '禁用' }}
           </a-tag>
         </a-descriptions-item>
-        <a-descriptions-item label="昵称">{{ currentUser.nickname }}</a-descriptions-item>
+        <a-descriptions-item label="姓名">{{ currentUser.name || '-' }}</a-descriptions-item>
         <a-descriptions-item label="手机号">{{ currentUser.phone || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="用户类型">{{ currentUser.userTypeText || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="绑定状态">{{ currentUser.isBound === 1 ? '已绑定' : '未绑定' }}</a-descriptions-item>
         <a-descriptions-item label="注册时间">{{ currentUser.createdAt }}</a-descriptions-item>
-        <a-descriptions-item label="最后登录">{{ currentUser.lastLoginAt || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="爽约次数">{{ currentUser.noShowCount || 0 }}</a-descriptions-item>
       </a-descriptions>
       
       <a-divider />
@@ -157,10 +159,9 @@ const pagination = reactive({
 })
 
 const columns = [
-  { title: '用户ID', dataIndex: 'id', key: 'id' },
-  { title: '昵称', dataIndex: 'nickname', key: 'nickname' },
+  { title: '工号/学号', dataIndex: 'studentNo', key: 'studentNo' },
+  { title: '姓名', dataIndex: 'name', key: 'name' },
   { title: '手机号', dataIndex: 'phone', key: 'phone' },
-  { title: '预约次数', dataIndex: 'bookingCount', key: 'bookingCount' },
   { title: '爽约次数', dataIndex: 'noShowCount', key: 'noShowCount' },
   { title: '状态', key: 'status' },
   { title: '操作', key: 'action', width: 120 }

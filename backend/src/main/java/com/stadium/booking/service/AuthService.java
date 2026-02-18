@@ -28,17 +28,16 @@ public class AuthService {
         WechatService.WechatSessionResult session = wechatService.code2Session(request.getCode());
         String openid = session.getOpenid();
 
-        User user = userRepository.findByOpenid(openid)
-            .orElseGet(() -> {
-                User newUser = new User();
-                newUser.setOpenid(openid);
-                newUser.setUnionId(session.getUnionid());
-                newUser.setUserType(1);
-                newUser.setStatus(1);
-                newUser.setNoShowCount(0);
-                userRepository.insert(newUser);
-                return newUser;
-            });
+        User user = userRepository.findByOpenid(openid).orElse(null);
+
+        if (user == null) {
+            user = new User();
+            user.setOpenid(openid);
+            user.setUnionId(session.getUnionid());
+            user.setStatus(1);
+            user.setNoShowCount(0);
+            userRepository.insert(user);
+        }
 
         if (user.getStatus() == 0) {
             if (user.getBannedUntil() != null && user.getBannedUntil().isAfter(LocalDateTime.now())) {
@@ -51,17 +50,29 @@ public class AuthService {
         String refreshToken = jwtUtils.generateRefreshToken(user.getId());
 
         boolean isBound = user.getIsBound() != null && user.getIsBound() == 1;
-        boolean needBind = !isBound && user.getStudentNo() == null;
+        boolean needBind = !isBound;
 
         LoginResponse response = new LoginResponse();
         response.setToken(token);
         response.setRefreshToken(refreshToken);
         response.setUserId(user.getId());
-        response.setUserType("USER");
+        response.setName(user.getName());
+        response.setUserType(user.getUserType());
+        response.setUserTypeText(getUserTypeText(user.getUserType()));
         response.setIsNewUser(user.getName() == null);
         response.setIsBound(isBound);
         response.setNeedBind(needBind);
         return response;
+    }
+
+    private String getUserTypeText(Integer type) {
+        if (type == null) return "未绑定";
+        return switch (type) {
+            case 1 -> "学生";
+            case 2 -> "教师";
+            case 3 -> "外部人员";
+            default -> "未知";
+        };
     }
 
     public LoginResponse adminLogin(AdminLoginRequest request) {
@@ -86,8 +97,11 @@ public class AuthService {
         response.setToken(token);
         response.setRefreshToken(refreshToken);
         response.setUserId(admin.getId());
-        response.setUserType("ADMIN");
+        response.setUserType(0);
+        response.setUserTypeText("管理员");
         response.setIsNewUser(false);
+        response.setIsBound(true);
+        response.setNeedBind(false);
         return response;
     }
 

@@ -38,7 +38,8 @@ public class AdminAuthController {
         
         LoginResponse response = new LoginResponse();
         response.setUserId(admin.getId());
-        response.setUserType("ADMIN");
+        response.setUserType(0);
+        response.setUserTypeText("管理员");
         return Result.success(response);
     }
 

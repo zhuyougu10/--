@@ -164,7 +164,10 @@ public class VenueService {
         response.setSlotMinutes(venue.getSlotMinutes());
         response.setBookAheadDays(venue.getBookAheadDays());
         response.setCancelCutoffMinutes(venue.getCancelCutoffMinutes());
+        response.setCheckinWindowBefore(venue.getCheckinWindowBefore());
+        response.setNoShowGraceMinutes(venue.getNoShowGraceMinutes());
         response.setDailySlotLimit(venue.getDailySlotLimit());
+        response.setWeeklySlotLimit(venue.getWeeklySlotLimit());
         response.setStatus(venue.getStatus());
         response.setCourtCount(courtRepository.countByVenueId(venue.getId()));
         return response;

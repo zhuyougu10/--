@@ -125,10 +125,11 @@ public class UserService {
     }
 
     private String getUserTypeText(Integer type) {
-        if (type == null) return "未知";
+        if (type == null) return "未绑定";
         return switch (type) {
-            case 1 -> "普通用户";
-            case 2 -> "会员";
+            case 1 -> "学生";
+            case 2 -> "教师";
+            case 3 -> "外部人员";
             default -> "未知";
         };
     }

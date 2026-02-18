@@ -19,7 +19,9 @@ export interface LoginResult {
   token: string
   refreshToken: string
   userId: number
-  userType: string
+  name?: string
+  userType: number
+  userTypeText: string
   isNewUser: boolean
   isBound: boolean
   needBind: boolean

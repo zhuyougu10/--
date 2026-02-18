@@ -2,7 +2,7 @@
   <view class="container">
     <view class="header">
       <text class="title">绑定工号/学号</text>
-      <text class="subtitle">绑定后可享受更多预约权限</text>
+      <text class="subtitle">首次登录需要绑定工号/学号</text>
     </view>
 
     <view class="form-section">
@@ -29,15 +29,13 @@
       <button class="submit-btn" :disabled="loading" @click="handleSubmit">
         {{ loading ? '绑定中...' : '确认绑定' }}
       </button>
-
-      <button class="skip-btn" @click="handleSkip">跳过绑定</button>
     </view>
 
     <view class="tips">
       <text class="tips-title">温馨提示</text>
       <text class="tips-item">1. 工号/学号需要与系统预置信息匹配</text>
       <text class="tips-item">2. 姓名需要与工号/学号对应</text>
-      <text class="tips-item">3. 跳过后可在个人中心补绑</text>
+      <text class="tips-item">3. 如有问题请联系管理员</text>
     </view>
   </view>
 </template>
@@ -81,18 +79,6 @@ const handleSubmit = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const handleSkip = () => {
-  uni.showModal({
-    title: '跳过绑定',
-    content: '跳过后部分功能可能受限，确定跳过吗？',
-    success: (res) => {
-      if (res.confirm) {
-        uni.switchTab({ url: '/pages/index/index' })
-      }
-    }
-  })
 }
 </script>
 
@@ -162,17 +148,6 @@ const handleSkip = () => {
 
 .submit-btn[disabled] {
   background: #ccc;
-}
-
-.skip-btn {
-  width: 100%;
-  height: 88rpx;
-  background: #fff;
-  color: #999;
-  font-size: 30rpx;
-  border-radius: 12rpx;
-  border: 2rpx solid #ddd;
-  margin-top: 20rpx;
 }
 
 .tips {

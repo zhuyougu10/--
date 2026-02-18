@@ -19,7 +19,10 @@ public class VenueResponse {
     private Integer slotMinutes;
     private Integer bookAheadDays;
     private Integer cancelCutoffMinutes;
+    private Integer checkinWindowBefore;
+    private Integer noShowGraceMinutes;
     private Integer dailySlotLimit;
+    private Integer weeklySlotLimit;
     private Integer status;
     private Integer courtCount;
     private List<CourtResponse> courts;

@@ -4,8 +4,9 @@
       <view class="user-info">
         <image class="avatar" :src="userInfo?.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
         <view class="user-detail">
-          <text class="nickname">{{ userInfo?.nickname || '用户' }}</text>
-          <text class="user-type">{{ getUserTypeName(userInfo?.userType || '') }}</text>
+          <text class="nickname">{{ userInfo?.name || '用户' }}</text>
+          <text class="user-type" v-if="userInfo?.studentNo">{{ userInfo.studentNo }}</text>
+          <text class="user-type">{{ getUserTypeName(userInfo?.userType) }}</text>
         </view>
       </view>
     </view>
@@ -52,14 +53,6 @@
         <text class="menu-text">关于我们</text>
         <text class="menu-arrow">></text>
       </view>
-      
-      <view class="menu-item" @click="showRules">
-        <view class="menu-icon">
-          <text class="iconfont">📖</text>
-        </view>
-        <text class="menu-text">预约须知</text>
-        <text class="menu-arrow">></text>
-      </view>
     </view>
     
     <view class="logout-section" v-if="isLoggedIn">
@@ -73,6 +66,7 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useAuth, useUserType } from '@/composables/useAuth'
 import { useBooking } from '@/composables/useBooking'
+import { getUserProfile } from '@/api/auth'
 
 const { isLoggedIn, userInfo, checkLogin, login, logout } = useAuth()
 const { getUserTypeName } = useUserType()
@@ -83,9 +77,22 @@ const pendingCount = ref(0)
 onShow(() => {
   checkLogin()
   if (isLoggedIn.value) {
+    loadUserProfile()
     loadPendingCount()
   }
 })
+
+const loadUserProfile = async () => {
+  try {
+    const result = await getUserProfile()
+    if (result.data) {
+      userInfo.value = result.data
+      uni.setStorageSync('userInfo', result.data)
+    }
+  } catch (e) {
+    console.error('加载用户信息失败', e)
+  }
+}
 
 const loadPendingCount = async () => {
   await loadBookings(1)
@@ -95,6 +102,7 @@ const loadPendingCount = async () => {
 const handleLogin = async () => {
   const success = await login()
   if (success) {
+    loadUserProfile()
     loadPendingCount()
   }
 }
@@ -113,14 +121,6 @@ const showAbout = () => {
   uni.showModal({
     title: '关于我们',
     content: '校园球馆智能预约系统\n版本: 1.0.0',
-    showCancel: false
-  })
-}
-
-const showRules = () => {
-  uni.showModal({
-    title: '预约须知',
-    content: '1. 每人每天最多预约2个时段\n2. 预约开始前30分钟不可取消\n3. 爽约3次将被限制预约7天\n4. 请在预约时段开始前15分钟内核销签到',
     showCancel: false
   })
 }

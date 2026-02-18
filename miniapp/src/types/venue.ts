@@ -12,7 +12,10 @@ export interface Venue {
   slotMinutes?: number
   bookAheadDays?: number
   cancelCutoffMinutes?: number
+  checkinWindowBefore?: number
+  noShowGraceMinutes?: number
   dailySlotLimit?: number
+  weeklySlotLimit?: number
   status: number
   courtCount?: number
   courts?: Court[]

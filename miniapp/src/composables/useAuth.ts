@@ -28,8 +28,9 @@ export function useAuth() {
       token.value = result.token
       userInfo.value = {
         id: result.userId,
-        userType: result.userType === 'STUDENT' ? 0 : result.userType === 'TEACHER' ? 1 : 2,
-        userTypeText: result.userType,
+        name: result.name,
+        userType: result.userType,
+        userTypeText: result.userTypeText,
         isBound: result.isBound ? 1 : 0
       }
       
@@ -74,23 +75,23 @@ export function useAuth() {
 
 export function useUserType() {
   const userTypeMap: Record<number, string> = {
-    0: '学生',
-    1: '教师',
-    2: '教职工'
+    1: '学生',
+    2: '教师',
+    3: '外部人员'
   }
 
-  const userTypeCodeMap: Record<string, number> = {
-    'STUDENT': 0,
-    'TEACHER': 1,
-    'STAFF': 2
-  }
-
-  const getUserTypeName = (type: number): string => {
+  const getUserTypeName = (type: number | undefined): string => {
+    if (type === undefined || type === null) return '未绑定'
     return userTypeMap[type] || '用户'
   }
 
   const getUserTypeCode = (type: string): number => {
-    return userTypeCodeMap[type] ?? 0
+    const codeMap: Record<string, number> = {
+      'STUDENT': 1,
+      'TEACHER': 2,
+      'EXTERNAL': 3
+    }
+    return codeMap[type] ?? 1
   }
 
   return {

@@ -18,8 +18,8 @@
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === 1 ? 'green' : 'red'">
-            {{ record.status === 1 ? '营业中' : '已关闭' }}
+          <a-tag :color="isVenueOpen(record) ? 'green' : 'default'">
+            {{ isVenueOpen(record) ? '营业中' : '已闭馆' }}
           </a-tag>
         </template>
         <template v-if="column.key === 'sportType'">
@@ -95,6 +95,13 @@ const getSportTypeLabel = (type) => sportTypeMap[type] || type
 const getSportTypes = (sportType) => {
   if (!sportType) return []
   return sportType.split(',').filter(t => t.trim())
+}
+
+const isVenueOpen = (venue) => {
+  if (venue.status !== 1) return false
+  const now = new Date()
+  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  return currentTime >= venue.openTime && currentTime <= venue.closeTime
 }
 
 const loadVenues = async () => {

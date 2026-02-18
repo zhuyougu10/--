@@ -7,7 +7,9 @@ public class LoginResponse {
     private String token;
     private String refreshToken;
     private Long userId;
-    private String userType;
+    private String name;
+    private Integer userType;
+    private String userTypeText;
     private Boolean isNewUser;
     private Boolean isBound;
     private Boolean needBind;
