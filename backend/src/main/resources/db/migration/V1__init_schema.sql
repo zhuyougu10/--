@@ -74,7 +74,6 @@ CREATE TABLE permission (
 ) ENGINE=InnoDB COMMENT='权限表';
 
 CREATE TABLE role_permission (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
     role_id BIGINT NOT NULL,
     permission_id BIGINT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -84,7 +83,6 @@ CREATE TABLE role_permission (
 ) ENGINE=InnoDB COMMENT='角色权限关联表';
 
 CREATE TABLE admin_user_role (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
     admin_user_id BIGINT NOT NULL,
     role_id BIGINT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
