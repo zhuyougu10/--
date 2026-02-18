@@ -1,9 +1,3 @@
-CREATE DATABASE IF NOT EXISTS stadium_booking
-DEFAULT CHARACTER SET utf8mb4
-DEFAULT COLLATE utf8mb4_unicode_ci;
-
-USE stadium_booking;
-
 CREATE TABLE campus (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL COMMENT '校区名称',
