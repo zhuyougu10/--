@@ -6,18 +6,67 @@ import {
   cancelBooking as cancelBookingApi,
   getQrCode 
 } from '@/api/booking'
-import type { Booking, CreateBookingParams } from '@/types'
+import type { Booking, BookingWithDisplay, CreateBookingParams } from '@/types'
+
+export const isBookingExpired = (booking: Booking): boolean => {
+  if (!booking || booking.status !== 1) return false
+  if (!booking.bookingDate || !booking.endTime) return false
+  const endAt = new Date(`${booking.bookingDate} ${booking.endTime}`)
+  if (Number.isNaN(endAt.getTime())) return false
+  return Date.now() > endAt.getTime()
+}
+
+export const getBookingDisplayStatus = (booking: Booking): { text: string; className: string; isExpired: boolean } => {
+  if (isBookingExpired(booking)) {
+    return {
+      text: '已过期',
+      className: 'expired',
+      isExpired: true
+    }
+  }
+
+  const statusTextMap: Record<number, string> = {
+    1: '待使用',
+    2: '已取消',
+    3: '已完成',
+    4: '爽约'
+  }
+
+  const statusClassMap: Record<number, string> = {
+    1: 'pending',
+    2: 'cancelled',
+    3: 'completed',
+    4: 'no-show'
+  }
+
+  return {
+    text: statusTextMap[booking.status] || '未知',
+    className: statusClassMap[booking.status] || '',
+    isExpired: false
+  }
+}
+
+export const toBookingWithDisplay = (booking: Booking): BookingWithDisplay => {
+  const display = getBookingDisplayStatus(booking)
+  return {
+    ...booking,
+    displayStatusText: display.text,
+    displayStatusClass: display.className,
+    isExpired: display.isExpired
+  }
+}
 
 export function useBooking() {
-  const bookings = ref<Booking[]>([])
-  const currentBooking = ref<Booking | null>(null)
+  const bookings = ref<BookingWithDisplay[]>([])
+  const currentBooking = ref<BookingWithDisplay | null>(null)
   const loading = ref(false)
   const submitting = ref(false)
 
   const loadBookings = async (status?: number) => {
     loading.value = true
     try {
-      bookings.value = await getMyBookings(status ?? null)
+      const list = await getMyBookings(status ?? null)
+      bookings.value = (list || []).map(toBookingWithDisplay)
     } catch (e) {
       console.error(e)
     } finally {
@@ -28,7 +77,8 @@ export function useBooking() {
   const loadBookingDetail = async (bookingNo: string) => {
     loading.value = true
     try {
-      currentBooking.value = await getBookingDetail(bookingNo)
+      const detail = await getBookingDetail(bookingNo)
+      currentBooking.value = detail ? toBookingWithDisplay(detail) : null
     } catch (e) {
       console.error(e)
     } finally {
@@ -74,11 +124,13 @@ export function useBooking() {
 export function useQrCode() {
   const qrCodeUrl = ref('')
   const qrExpireAt = ref<string | null>(null)
+  const qrToken = ref('')
 
   const refreshQrCode = async (bookingNo: string) => {
     try {
       const result = await getQrCode(bookingNo)
-      qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(result.token)}`
+      qrToken.value = result.token
+      qrCodeUrl.value = ''
       qrExpireAt.value = result.expiresAt
     } catch (e) {
       console.error(e)
@@ -87,32 +139,21 @@ export function useQrCode() {
 
   return {
     qrCodeUrl,
+    qrToken,
     qrExpireAt,
     refreshQrCode
   }
 }
 
 export function useBookingStatus() {
-  const statusTextMap: Record<number, string> = {
-    1: '待使用',
-    2: '已取消',
-    3: '已完成',
-    4: '爽约'
+  const getStatusText = (status: number, expired = false): string => {
+    if (expired) return '已过期'
+    return getBookingDisplayStatus({ status } as Booking).text
   }
 
-  const statusClassMap: Record<number, string> = {
-    1: 'pending',
-    2: 'cancelled',
-    3: 'completed',
-    4: 'no-show'
-  }
-
-  const getStatusText = (status: number): string => {
-    return statusTextMap[status] || '未知'
-  }
-
-  const getStatusClass = (status: number): string => {
-    return statusClassMap[status] || ''
+  const getStatusClass = (status: number, expired = false): string => {
+    if (expired) return 'expired'
+    return getBookingDisplayStatus({ status } as Booking).className
   }
 
   return {

@@ -95,8 +95,9 @@ const loadUserProfile = async () => {
 }
 
 const loadPendingCount = async () => {
-  await loadBookings(1)
-  pendingCount.value = bookings.value.length || 0
+  await loadBookings()
+  const list = bookings.value || []
+  pendingCount.value = list.filter(item => item.status === 1 && !item.isExpired).length
 }
 
 const handleLogin = async () => {

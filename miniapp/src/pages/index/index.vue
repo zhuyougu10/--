@@ -13,7 +13,7 @@
         :key="venue.id"
         @click="goToVenue(venue.id)"
       >
-        <image class="venue-image" :src="venue.imageUrl || '/static/default-venue.svg'" mode="aspectFill" />
+        <image class="venue-image" :src="getVenueImage(venue.imageUrl)" mode="aspectFill" />
         <view class="venue-info">
           <text class="venue-name">{{ venue.name }}</text>
           <text class="venue-location">{{ venue.location }}</text>
@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app'
 import { useVenue, useSportType } from '@/composables/useVenue'
+import { resolveAssetUrl } from '@/utils/asset'
 
 const { venues, loading, loadVenues } = useVenue()
 const { getSportTypeName } = useSportType()
@@ -58,6 +59,8 @@ const goToVenue = (id: number) => {
     url: `/pages/venue-detail/venue-detail?id=${id}`
   })
 }
+
+const getVenueImage = (imageUrl?: string) => resolveAssetUrl(imageUrl)
 </script>
 
 <style scoped>

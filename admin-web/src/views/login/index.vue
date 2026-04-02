@@ -53,6 +53,7 @@ import { message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
 import { ApiError } from '@/utils/request'
+import { isMobileDevice } from '@/utils/device'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -67,7 +68,7 @@ const handleLogin = async () => {
   try {
     const result = await userStore.login(formState)
     message.success(result.message || '登录成功')
-    router.push('/dashboard')
+    router.push(isMobileDevice() ? '/checkin' : '/dashboard')
   } catch (e) {
     if (e instanceof ApiError) {
       message.error(e.message)
@@ -101,5 +102,24 @@ const handleLogin = async () => {
   text-align: center;
   margin-bottom: 40px;
   color: #1890ff;
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: 16px;
+    align-items: stretch;
+  }
+
+  .login-box {
+    width: 100%;
+    padding: 24px;
+    margin: auto 0;
+    border-radius: 12px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
 }
 </style>

@@ -90,8 +90,15 @@ public class TimeSlotService {
         LocalTime closeTime = venue.getCloseTime();
         int slotMinutes = venue.getSlotMinutes();
 
+        if (slotMinutes <= 0) {
+            throw new IllegalStateException("球馆时段配置无效: slot_minutes 必须大于 0");
+        }
+
         while (currentTime.isBefore(closeTime)) {
             LocalTime endTime = currentTime.plusMinutes(slotMinutes);
+            if (!endTime.isAfter(currentTime)) {
+                break;
+            }
             if (endTime.isAfter(closeTime)) {
                 break;
             }

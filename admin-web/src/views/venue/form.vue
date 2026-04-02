@@ -92,6 +92,28 @@
           :rows="4"
         />
       </a-form-item>
+
+      <a-form-item label="球馆图片" name="imageUrl">
+        <a-space direction="vertical" style="width: 100%">
+          <a-upload
+            :show-upload-list="false"
+            :before-upload="beforeImageUpload"
+            accept="image/png,image/jpeg,image/webp"
+          >
+            <a-button :loading="uploading">上传图片</a-button>
+          </a-upload>
+          <a-input
+            v-model:value="formState.imageUrl"
+            placeholder="上传后自动填充图片地址，也可手动输入"
+          />
+          <img
+            v-if="formState.imageUrl"
+            :src="previewUrl"
+            alt="球馆图片预览"
+            style="width: 240px; height: 140px; object-fit: cover; border-radius: 8px; border: 1px solid #f0f0f0;"
+          />
+        </a-space>
+      </a-form-item>
       
       <a-form-item :wrapper-col="{ offset: 4, span: 16 }">
         <a-space>
@@ -110,13 +132,14 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
-import { getVenueDetail, createVenue, updateVenue } from '@/api/venue'
+import { getVenueDetail, createVenue, updateVenue, uploadVenueImage } from '@/api/venue'
 import { ApiError } from '@/utils/request'
 
 const route = useRoute()
 const router = useRouter()
 const formRef = ref(null)
 const loading = ref(false)
+const uploading = ref(false)
 
 const isEdit = computed(() => !!route.params.id)
 const venueId = computed(() => route.params.id)
@@ -133,6 +156,50 @@ const formState = reactive({
   dailySlotLimit: 2,
   description: ''
 })
+
+const previewUrl = computed(() => {
+  if (!formState.imageUrl) return ''
+  if (formState.imageUrl.startsWith('http://') || formState.imageUrl.startsWith('https://')) {
+    return formState.imageUrl
+  }
+  if (formState.imageUrl.startsWith('/api/')) {
+    return formState.imageUrl
+  }
+  if (formState.imageUrl.startsWith('/')) {
+    return `/api${formState.imageUrl}`
+  }
+  return `/api/${formState.imageUrl}`
+})
+
+const beforeImageUpload = async (file) => {
+  const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+  if (!isImage) {
+    message.error('仅支持 JPG/PNG/WEBP 格式')
+    return false
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    message.error('图片大小不能超过 5MB')
+    return false
+  }
+
+  try {
+    uploading.value = true
+    const result = await uploadVenueImage(file)
+    formState.imageUrl = result.data.url
+    message.success('图片上传成功')
+  } catch (e) {
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else {
+      message.error('图片上传失败')
+    }
+  } finally {
+    uploading.value = false
+  }
+
+  return false
+}
 
 const rules = {
   name: [{ required: true, message: '请输入球馆名称' }],

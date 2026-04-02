@@ -25,6 +25,12 @@ export interface Booking {
 
 export type BookingStatus = 1 | 2 | 3 | 4
 
+export interface BookingWithDisplay extends Booking {
+  displayStatusText: string
+  displayStatusClass: string
+  isExpired: boolean
+}
+
 export interface CreateBookingParams {
   venueId: number
   courtId: number

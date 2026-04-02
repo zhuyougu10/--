@@ -1,6 +1,17 @@
 <template>
+  <div v-if="isMobile" class="mobile-layout">
+    <router-view />
+  </div>
+
   <a-layout class="main-layout">
-    <a-layout-sider v-model:collapsed="collapsed" collapsible>
+    <a-layout-sider
+      v-model:collapsed="collapsed"
+      collapsible
+      :collapsed-width="isMobile ? 0 : 80"
+      :width="220"
+      :trigger="isMobile ? null : undefined"
+      :breakpoint="isMobile ? undefined : 'lg'"
+    >
       <div class="logo">
         <span v-if="!collapsed">球馆管理系统</span>
         <span v-else>球馆</span>
@@ -42,6 +53,9 @@
     </a-layout-sider>
     <a-layout>
       <a-layout-header class="header">
+        <a-button v-if="isMobile" type="text" @click="collapsed = !collapsed">
+          <MenuOutlined />
+        </a-button>
         <div class="header-right">
           <a-dropdown>
             <a class="user-info" @click.prevent>
@@ -73,14 +87,17 @@ import {
   CalendarOutlined,
   FileTextOutlined,
   ScanOutlined,
-  UserOutlined
+  UserOutlined,
+  MenuOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
+import { isMobileDevice } from '@/utils/device'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const collapsed = ref(false)
+const isMobile = isMobileDevice()
+const collapsed = ref(isMobile)
 
 const selectedKeys = computed(() => {
   const path = route.path
@@ -104,6 +121,11 @@ const logout = () => {
 <style scoped>
 .main-layout {
   min-height: 100vh;
+}
+
+.mobile-layout {
+  min-height: 100vh;
+  background: #f5f5f5;
 }
 
 .logo {
@@ -136,5 +158,21 @@ const logout = () => {
   background: #fff;
   border-radius: 8px;
   min-height: calc(100vh - 112px);
+}
+
+.header-right {
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 12px;
+  }
+
+  .content {
+    margin: 12px;
+    padding: 12px;
+    min-height: calc(100vh - 88px);
+  }
 }
 </style>

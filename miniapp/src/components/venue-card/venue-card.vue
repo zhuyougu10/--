@@ -1,6 +1,6 @@
 <template>
   <view class="venue-card" @click="handleClick">
-    <image class="venue-image" :src="venue.imageUrl || '/static/default-venue.svg'" mode="aspectFill" />
+    <image class="venue-image" :src="getVenueImage(venue.imageUrl)" mode="aspectFill" />
     <view class="venue-info">
       <text class="venue-name">{{ venue.name }}</text>
       <text class="venue-location">{{ venue.location }}</text>
@@ -23,6 +23,7 @@
 import { computed } from 'vue'
 import { useSportType } from '@/composables/useVenue'
 import { isVenueOpen } from '@/utils/date'
+import { resolveAssetUrl } from '@/utils/asset'
 import type { Venue } from '@/types'
 
 const props = withDefaults(defineProps<{
@@ -48,6 +49,8 @@ const getSportTypes = (sportType: string) => {
 }
 
 const isOpen = computed(() => isVenueOpen(props.venue))
+
+const getVenueImage = (imageUrl?: string) => resolveAssetUrl(imageUrl)
 
 const handleClick = () => {
   emit('click', props.venue)

@@ -43,3 +43,16 @@ export const deleteVenue = (id) => {
     method: 'DELETE'
   })
 }
+
+export const uploadVenueImage = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/admin/files/upload',
+    method: 'POST',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

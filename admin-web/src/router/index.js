@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isMobileDevice } from '@/utils/device'
 
 const routes = [
   {
@@ -77,6 +78,12 @@ const routes = [
         name: 'UserList',
         component: () => import('@/views/user/list.vue'),
         meta: { title: '用户管理', icon: 'user' }
+      },
+      {
+        path: 'm/checkin',
+        name: 'MobileCheckin',
+        redirect: '/checkin',
+        meta: { hidden: true }
       }
     ]
   }
@@ -89,11 +96,15 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('admin_token')
+  const isMobileLogin = localStorage.getItem('admin_is_mobile') === '1'
+  const shouldGoCheckin = isMobileLogin || isMobileDevice()
   
   if (to.meta.requiresAuth !== false && !token) {
     next('/login')
   } else if (to.path === '/login' && token) {
-    next('/dashboard')
+    next(shouldGoCheckin ? '/checkin' : '/dashboard')
+  } else if (shouldGoCheckin && to.path !== '/checkin' && to.path !== '/m/checkin' && to.path !== '/login') {
+    next('/checkin')
   } else {
     next()
   }

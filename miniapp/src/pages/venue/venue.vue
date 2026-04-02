@@ -47,7 +47,7 @@
         :key="venue.id"
         @click="goToVenue(venue.id)"
       >
-        <image class="venue-image" :src="venue.imageUrl || '/static/default-venue.svg'" mode="aspectFill" />
+        <image class="venue-image" :src="getVenueImage(venue.imageUrl)" mode="aspectFill" />
         <view class="venue-info">
           <text class="venue-name">{{ venue.name }}</text>
           <text class="venue-location">{{ venue.location }}</text>
@@ -76,6 +76,7 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useVenue, useSportType } from '@/composables/useVenue'
 import { isVenueOpen } from '@/utils/date'
+import { resolveAssetUrl } from '@/utils/asset'
 import type { Venue } from '@/types'
 
 const { venues, loading, loadVenues } = useVenue()
@@ -109,6 +110,8 @@ onShow(() => {
 })
 
 const isOpen = (venue: Venue) => isVenueOpen(venue)
+
+const getVenueImage = (imageUrl?: string) => resolveAssetUrl(imageUrl)
 
 const filterByType = (type: string) => {
   activeType.value = type

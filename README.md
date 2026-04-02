@@ -421,6 +421,67 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
+#### 3. 管理端 HTTPS 打不开（ERR_SSL_VERSION_OR_CIPHER_MISMATCH）
+
+**现象：**
+- 手机访问 `https://<局域网IP>:3000` 报错：`ERR_SSL_VERSION_OR_CIPHER_MISMATCH`
+- 或提示“此站点使用不受支持的协议”
+
+**根因（常见）：**
+1. 访问了错误端口，或者 3000 端口上的服务并非 HTTPS
+2. 证书与私钥未正确加载
+3. 旧进程占用了端口，导致请求打到错误服务
+
+**修复步骤（按顺序执行）：**
+
+1) 进入管理端目录并生成本地证书：
+```bash
+cd admin-web
+npm run cert:gen
+```
+
+证书生成位置：
+- `admin-web/.cert/dev-key.pem`
+- `admin-web/.cert/dev-cert.pem`
+
+2) 关闭旧的 node/vite 进程（避免端口被错误服务占用）：
+```bash
+netstat -ano | findstr :3000
+taskkill /PID <进程ID> /F
+```
+
+3) 使用 HTTPS 模式启动管理端：
+```bash
+npm run dev:https
+```
+
+4) 确认启动日志中包含（必须是 `https`）：
+```text
+Local:   https://localhost:3000/
+Network: https://<你的局域网IP>:3000/
+```
+
+5) 手机访问：
+```text
+https://<你的局域网IP>:3000
+```
+
+首次提示证书不安全时，选择继续访问（开发环境）。
+
+**快速诊断命令：**
+```bash
+curl -vk https://<你的局域网IP>:3000
+curl -v  http://<你的局域网IP>:3000
+```
+
+判断方法：
+- `http` 能通但 `https` 握手失败：通常是服务未正确启用 HTTPS 或端口服务错误
+- 两者都不通：通常是服务未启动或防火墙拦截
+
+**补充说明：**
+- 管理端实时摄像头扫码需要 HTTPS 安全上下文。
+- 若仍受浏览器策略限制，可在扫码页使用“拍照扫码”作为降级方案。
+
 ### 小程序问题
 
 #### 1. 编译报错 "AppID 未配置"

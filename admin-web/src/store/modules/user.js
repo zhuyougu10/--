@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { login as loginApi, getProfile, logout as logoutApi } from '@/api/auth'
 import { ApiError } from '@/utils/request'
+import { isMobileDevice } from '@/utils/device'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('admin_token') || '')
@@ -16,6 +17,7 @@ export const useUserStore = defineStore('user', () => {
     token.value = result.data.token
     localStorage.setItem('admin_token', result.data.token)
     localStorage.setItem('admin_username', credentials.username)
+    localStorage.setItem('admin_is_mobile', isMobileDevice() ? '1' : '0')
     return result
   }
 
@@ -29,6 +31,7 @@ export const useUserStore = defineStore('user', () => {
       token.value = ''
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_username')
+      localStorage.removeItem('admin_is_mobile')
       throw e
     }
   }
@@ -47,6 +50,7 @@ export const useUserStore = defineStore('user', () => {
       userInfo.value = null
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_username')
+      localStorage.removeItem('admin_is_mobile')
     }
   }
 
@@ -55,6 +59,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = null
     localStorage.removeItem('admin_token')
     localStorage.removeItem('admin_username')
+    localStorage.removeItem('admin_is_mobile')
   }
 
   return {

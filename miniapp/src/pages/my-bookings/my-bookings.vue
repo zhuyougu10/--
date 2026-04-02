@@ -40,8 +40,8 @@
       >
         <view class="booking-header">
           <text class="venue-name">{{ booking.venueName }}</text>
-          <text class="status-tag" :class="getStatusClass(booking.status)">
-            {{ getStatusText(booking.status) }}
+          <text class="status-tag" :class="booking.displayStatusClass">
+            {{ booking.displayStatusText }}
           </text>
         </view>
         
@@ -80,10 +80,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { useBooking, useBookingStatus } from '@/composables/useBooking'
+import { useBooking } from '@/composables/useBooking'
 
 const { bookings, loading, loadBookings } = useBooking()
-const { getStatusText, getStatusClass } = useBookingStatus()
 
 const activeStatus = ref<'all' | number>('all')
 
@@ -189,6 +188,16 @@ const goToDetail = (bookingNo: string) => {
 .status-tag.no-show {
   background: #fff7e6;
   color: #faad14;
+}
+
+.status-tag.expired {
+  background: #fff1f0;
+  color: #cf1322;
+}
+
+.status-tag.expired {
+  background: #fff1f0;
+  color: #cf1322;
 }
 
 .booking-info {

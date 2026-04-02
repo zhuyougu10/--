@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="venue-header">
-      <image class="venue-image" :src="currentVenue?.imageUrl || '/static/default-venue.svg'" mode="aspectFill" />
+      <image class="venue-image" :src="getVenueImage(currentVenue?.imageUrl)" mode="aspectFill" />
       <view class="venue-overlay">
         <text class="venue-name">{{ currentVenue?.name }}</text>
         <text class="venue-location">{{ currentVenue?.location }}</text>
@@ -112,6 +112,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useVenue, useSportType } from '@/composables/useVenue'
+import { resolveAssetUrl } from '@/utils/asset'
 import type { Court } from '@/types'
 
 const venueId = ref<number>(0)
@@ -130,6 +131,8 @@ const isVenueOpen = computed(() => {
   const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   return currentTime >= currentVenue.value.openTime && currentTime <= currentVenue.value.closeTime
 })
+
+const getVenueImage = (imageUrl?: string) => resolveAssetUrl(imageUrl)
 
 onLoad((options) => {
   if (options?.id) {
