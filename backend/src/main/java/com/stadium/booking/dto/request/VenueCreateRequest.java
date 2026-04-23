@@ -30,7 +30,7 @@ public class VenueCreateRequest {
     private Integer slotMinutes = 60;
     private Integer bookAheadDays = 7;
     private Integer cancelCutoffMinutes = 30;
-    private Integer checkinWindowBefore = 15;
+    private Integer checkinWindowBefore = 30;
     private Integer noShowGraceMinutes = 15;
     private Integer dailySlotLimit = 2;
     private Integer weeklySlotLimit = 10;

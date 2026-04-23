@@ -106,7 +106,7 @@ CREATE TABLE venue (
     slot_minutes INT DEFAULT 60 COMMENT '时段长度(分钟)',
     book_ahead_days INT DEFAULT 7 COMMENT '可提前预约天数',
     cancel_cutoff_minutes INT DEFAULT 30 COMMENT '取消截止时间(开始前分钟)',
-    checkin_window_before INT DEFAULT 15 COMMENT '核销窗口开始(开始前分钟)',
+    checkin_window_before INT DEFAULT 30 COMMENT '核销窗口开始(开始前分钟)',
     no_show_grace_minutes INT DEFAULT 15 COMMENT '爽约宽限期(开始后分钟)',
     daily_slot_limit INT DEFAULT 2 COMMENT '个人日限额(时段数)',
     weekly_slot_limit INT DEFAULT 10 COMMENT '个人周限额(时段数)',
