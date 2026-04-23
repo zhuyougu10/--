@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class ViolationAdminController {
     @Operation(summary = "清除违约记录")
     @DeleteMapping("/{id}")
     @RequirePermission("user:update")
+    @PreAuthorize("hasRole('ADMIN')")
     public Result<Void> clearViolation(@PathVariable Long id) {
         violationService.clearViolation(id);
         return Result.success();
@@ -37,6 +39,7 @@ public class ViolationAdminController {
     @Operation(summary = "查询用户违约记录")
     @GetMapping("/user/{userId}")
     @RequirePermission("user:read")
+    @PreAuthorize("hasRole('ADMIN')")
     public Result<List<ViolationResponse>> getUserViolations(@PathVariable Long userId) {
         return Result.success(violationService.getUserViolations(userId));
     }
@@ -44,6 +47,7 @@ public class ViolationAdminController {
     @Operation(summary = "获取违约记录详情")
     @GetMapping("/{id}")
     @RequirePermission("user:read")
+    @PreAuthorize("hasRole('ADMIN')")
     public Result<ViolationResponse> getViolationById(@PathVariable Long id) {
         return Result.success(violationService.getViolationById(id));
     }

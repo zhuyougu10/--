@@ -23,7 +23,8 @@ public class UserContext {
     public static boolean isCurrentUserAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof UserPrincipal) {
-            return ((UserPrincipal) auth.getPrincipal()).getIsAdmin();
+            UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+            return Boolean.TRUE.equals(principal.getIsAdmin()) && "ADMIN".equals(principal.getUserType());
         }
         return false;
     }

@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -35,14 +36,23 @@ public class CheckinService {
     private final BookingRepository bookingRepository;
     private final VenueRepository venueRepository;
     private final AuditService auditService;
+    private final AdminVenueAccessService adminVenueAccessService;
 
     private static final int QR_TOKEN_VALID_MINUTES = 5;
 
     public IPage<CheckinResponse> listRecords(Integer current, Integer size, Long venueId, LocalDate date) {
         LambdaQueryWrapper<CheckinRecord> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (venueId != null) {
+            adminVenueAccessService.checkVenueAccess(venueId);
             wrapper.eq(CheckinRecord::getVenueId, venueId);
+        } else if (adminVenueAccessService.isCurrentVenueStaffRole()) {
+            List<Long> managedVenueIds = adminVenueAccessService.getCurrentManagedVenueIds();
+            if (managedVenueIds.isEmpty()) {
+                wrapper.apply("1 = 0");
+            } else {
+                wrapper.in(CheckinRecord::getVenueId, managedVenueIds);
+            }
         }
         if (date != null) {
             wrapper.apply("DATE(checked_in_at) = {0}", date);
@@ -122,6 +132,7 @@ public class CheckinService {
     }
 
     private CheckinResponse performCheckin(Booking booking, String qrToken, Integer checkinMethod) {
+        adminVenueAccessService.checkVenueAccess(booking.getVenueId());
         if (booking.getStatus() != 1) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "预约状态不正确，无法核销");
         }

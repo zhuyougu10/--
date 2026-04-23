@@ -232,3 +232,51 @@ Phase 3 - 进行中
 | 外链二维码请求失败 `ERR_CONNECTION_CLOSED` | 1 | 改为本地生成 |
 | `qrcode` 库报 `You need to specify a canvas element` | 1 | 替换为 `qrcode-generator + uni.createCanvasContext` |
 | 用户反馈二维码仍不可扫 | 1 | 继续优化渲染参数并准备真机联调 |
+
+---
+
+## Task Plan: 新增场馆管理员角色与按场馆权限收口（2026-04-23）
+
+## Goal
+新增“场馆管理员”角色，使其只能管理被分配的球馆；支持管理员与球馆多对多关联，并让后台登录、权限校验、球馆/场地/预约/核销等管理接口按可管理球馆范围收口。
+
+## Current Phase
+Phase 1 - 进行中
+
+## Phases
+
+### Phase 1: 现状梳理与方案确认
+- [x] 确认当前角色模型与后台登录签发方式
+- [x] 确认数据库已存在 `VENUE_STAFF` 与 `venue_staff` 关联表
+- [x] 与用户确认场馆管理员的具体能力边界
+- [x] 完成角色设计规格与实施计划文档
+- **Status:** complete
+
+### Phase 2: 设计与实现
+- [x] 设计角色签发与当前管理员可管理球馆查询方案
+- [x] 设计后台接口范围校验落点
+- [x] 实现数据模型、权限与业务收口
+- **Status:** complete
+
+### Phase 3: 验证与收尾
+- [x] 补充或更新相关测试
+- [x] 执行后端/前端验证
+- [x] 更新 `findings.md` 与 `progress.md`
+- **Status:** complete
+
+## Decisions Made
+| Decision | Rationale |
+|----------|-----------|
+| 优先复用现有 `VENUE_STAFF` 与 `venue_staff` 设计 | 数据库已有基础模型，避免无必要新增平行概念 |
+| 场馆管理员能力边界按“可管球馆/场地/时段/预约/核销，不可管后台账号与全局统计”落地 | 与用户确认结果一致，避免权限过宽 |
+| 必须提供管理员分配球馆的运营入口 | 否则角色无法持续运营，只能人工改库 |
+| 禁止给 `ADMIN` 账号配置受限球馆 | `ADMIN` 登录优先级最高，若允许分配会造成“看似受限、实际全局” |
+| 清空球馆分配时同步撤销 `VENUE_STAFF` 登录资格 | 避免已解除授权账号继续保留后台入口 |
+
+## Errors Encountered
+| Error | Attempt | Resolution |
+|-------|---------|------------|
+| PowerShell 直接传 `-Dtest=a,b` 失败 | 1 | 改为带引号的 Maven 参数 |
+| 后端首次编译缺少 `List` 导入 | 1 | 补齐导入后重新编译通过 |
+| 前端首次菜单条件渲染位置错误 | 1 | 把 `v-if` 提升到 `a-menu-item`，并补充 `profile` 自动拉取 |
+| 移动端仍被全局重定向到核销页 | 1 | 仅保留“移动端登录后默认进核销页”，移除持续强制跳转 |

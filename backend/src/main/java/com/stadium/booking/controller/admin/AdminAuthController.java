@@ -1,12 +1,8 @@
 package com.stadium.booking.controller.admin;
 
-import com.stadium.booking.common.exception.BusinessException;
-import com.stadium.booking.common.result.ErrorCode;
 import com.stadium.booking.common.result.Result;
 import com.stadium.booking.dto.request.AdminLoginRequest;
 import com.stadium.booking.dto.response.LoginResponse;
-import com.stadium.booking.entity.AdminUser;
-import com.stadium.booking.repository.AdminUserRepository;
 import com.stadium.booking.security.UserContext;
 import com.stadium.booking.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AdminAuthController {
     private final AuthService authService;
-    private final AdminUserRepository adminUserRepository;
 
     @Operation(summary = "管理员登录")
     @PostMapping("/login")
@@ -33,14 +28,7 @@ public class AdminAuthController {
     @GetMapping("/profile")
     public Result<LoginResponse> getProfile() {
         Long adminId = UserContext.getCurrentUserId();
-        AdminUser admin = adminUserRepository.findById(adminId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
-        
-        LoginResponse response = new LoginResponse();
-        response.setUserId(admin.getId());
-        response.setUserType(0);
-        response.setUserTypeText("管理员");
-        return Result.success(response);
+        return Result.success(authService.getAdminProfile(adminId));
     }
 
     @Operation(summary = "管理员登出")

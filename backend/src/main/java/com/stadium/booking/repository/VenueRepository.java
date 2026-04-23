@@ -3,6 +3,7 @@ package com.stadium.booking.repository;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.stadium.booking.entity.Venue;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +24,13 @@ public interface VenueRepository extends BaseMapper<Venue> {
 
     @Select("SELECT MAX(code) FROM venue WHERE code LIKE #{prefix}")
     String findMaxCodeByPrefix(String prefix);
+
+    @Select({"<script>",
+            "SELECT * FROM venue WHERE deleted_at IS NULL AND id IN",
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>",
+            "#{id}",
+            "</foreach>",
+            "ORDER BY id",
+            "</script>"})
+    List<Venue> findByIds(@Param("ids") List<Long> ids);
 }

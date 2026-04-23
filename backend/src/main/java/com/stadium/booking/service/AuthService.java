@@ -7,13 +7,16 @@ import com.stadium.booking.dto.request.AdminLoginRequest;
 import com.stadium.booking.dto.response.LoginResponse;
 import com.stadium.booking.entity.User;
 import com.stadium.booking.entity.AdminUser;
+import com.stadium.booking.repository.AdminRoleRepository;
 import com.stadium.booking.repository.UserRepository;
 import com.stadium.booking.repository.AdminUserRepository;
+import com.stadium.booking.repository.VenueStaffRepository;
 import com.stadium.booking.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,8 @@ public class AuthService {
     private final WechatService wechatService;
     private final UserRepository userRepository;
     private final AdminUserRepository adminUserRepository;
+    private final AdminRoleRepository adminRoleRepository;
+    private final VenueStaffRepository venueStaffRepository;
     private final JwtUtils jwtUtils;
 
     @Transactional
@@ -90,19 +95,68 @@ public class AuthService {
         admin.setLastLoginAt(LocalDateTime.now());
         adminUserRepository.updateById(admin);
 
-        String token = jwtUtils.generateToken(admin.getId(), "ADMIN", true);
+        String role = resolveAdminRole(admin.getId());
+        boolean isAdmin = "ADMIN".equals(role);
+
+        String token = jwtUtils.generateToken(admin.getId(), role, isAdmin);
         String refreshToken = jwtUtils.generateRefreshToken(admin.getId());
 
         LoginResponse response = new LoginResponse();
         response.setToken(token);
         response.setRefreshToken(refreshToken);
         response.setUserId(admin.getId());
+        response.setUsername(admin.getUsername());
+        response.setName(admin.getName());
+        response.setRole(role);
+        response.setRoleText(getAdminRoleText(role));
         response.setUserType(0);
-        response.setUserTypeText("管理员");
+        response.setUserTypeText(getAdminRoleText(role));
         response.setIsNewUser(false);
         response.setIsBound(true);
         response.setNeedBind(false);
         return response;
+    }
+
+    public LoginResponse getAdminProfile(Long adminId) {
+        AdminUser admin = adminUserRepository.findById(adminId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
+
+        String role = resolveAdminRole(adminId);
+
+        LoginResponse response = new LoginResponse();
+        response.setUserId(admin.getId());
+        response.setUsername(admin.getUsername());
+        response.setName(admin.getName());
+        response.setRole(role);
+        response.setRoleText(getAdminRoleText(role));
+        response.setUserType(0);
+        response.setUserTypeText(getAdminRoleText(role));
+        response.setIsNewUser(false);
+        response.setIsBound(true);
+        response.setNeedBind(false);
+        return response;
+    }
+
+    private String resolveAdminRole(Long adminId) {
+        List<String> roleCodes = adminRoleRepository.findRoleCodesByAdminUserId(adminId);
+        if (roleCodes.contains("ADMIN")) {
+            return "ADMIN";
+        }
+        if (roleCodes.contains("VENUE_STAFF")) {
+            if (venueStaffRepository.findVenueIdsByAdminUserId(adminId).isEmpty()) {
+                throw new BusinessException(ErrorCode.FORBIDDEN, "当前账号未分配可管理球馆");
+            }
+            return "VENUE_STAFF";
+        }
+        throw new BusinessException(ErrorCode.FORBIDDEN, "当前账号未分配后台角色");
+    }
+
+    private String getAdminRoleText(String role) {
+        return switch (role) {
+            case "ADMIN" -> "管理员";
+            case "VENUE_STAFF" -> "场馆管理员";
+            default -> "未知角色";
+        };
     }
 
     private boolean verifyPassword(String rawPassword, String encodedPassword) {

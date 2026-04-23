@@ -40,6 +40,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final BookingValidator bookingValidator;
     private final AuditService auditService;
+    private final AdminVenueAccessService adminVenueAccessService;
 
     @Transactional
     public BookingResponse createBooking(Long userId, BookingCreateRequest request) {
@@ -132,12 +133,18 @@ public class BookingService {
     public BookingResponse getBookingByNo(String bookingNo) {
         Booking booking = bookingRepository.findByBookingNo(bookingNo)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "预约不存在"));
+        if (adminVenueAccessService.isCurrentVenueStaffRole()) {
+            adminVenueAccessService.checkVenueAccess(booking.getVenueId());
+        }
         return toResponse(booking);
     }
 
     public BookingResponse getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "预约不存在"));
+        if (adminVenueAccessService.isCurrentVenueStaffRole()) {
+            adminVenueAccessService.checkVenueAccess(booking.getVenueId());
+        }
         return toResponse(booking);
     }
 
@@ -163,6 +170,7 @@ public class BookingService {
     }
 
     public List<BookingResponse> getVenueBookings(Long venueId, LocalDate date) {
+        adminVenueAccessService.checkVenueAccess(venueId);
         return bookingRepository.findByVenueAndDate(venueId, date).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
@@ -174,8 +182,16 @@ public class BookingService {
             return getVenueBookings(venueId, today);
         }
         LambdaQueryWrapper<Booking> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Booking::getBookingDate, today)
-               .orderByAsc(Booking::getStartTime);
+        wrapper.eq(Booking::getBookingDate, today);
+        if (adminVenueAccessService.isCurrentVenueStaffRole()) {
+            List<Long> managedVenueIds = adminVenueAccessService.getCurrentManagedVenueIds();
+            if (managedVenueIds.isEmpty()) {
+                wrapper.apply("1 = 0");
+            } else {
+                wrapper.in(Booking::getVenueId, managedVenueIds);
+            }
+        }
+        wrapper.orderByAsc(Booking::getStartTime);
         return bookingRepository.selectList(wrapper).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
@@ -184,11 +200,20 @@ public class BookingService {
     public IPage<BookingResponse> listPage(Integer current, Integer size, Long venueId, 
             Long courtId, Long userId, LocalDate date, Integer status) {
         LambdaQueryWrapper<Booking> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (venueId != null) {
+            adminVenueAccessService.checkVenueAccess(venueId);
             wrapper.eq(Booking::getVenueId, venueId);
+        } else if (adminVenueAccessService.isCurrentVenueStaffRole()) {
+            List<Long> managedVenueIds = adminVenueAccessService.getCurrentManagedVenueIds();
+            if (managedVenueIds.isEmpty()) {
+                wrapper.apply("1 = 0");
+            } else {
+                wrapper.in(Booking::getVenueId, managedVenueIds);
+            }
         }
         if (courtId != null) {
+            courtRepository.findById(courtId).ifPresent(court -> adminVenueAccessService.checkVenueAccess(court.getVenueId()));
             wrapper.eq(Booking::getCourtId, courtId);
         }
         if (userId != null) {
@@ -210,6 +235,7 @@ public class BookingService {
     public BookingResponse adminCancelBooking(Long adminId, String bookingNo, String reason) {
         Booking booking = bookingRepository.findByBookingNo(bookingNo)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "预约不存在"));
+        adminVenueAccessService.checkVenueAccess(booking.getVenueId());
 
         if (booking.getStatus() != BookingStatus.CONFIRMED.getCode()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "只能取消已确认的预约");

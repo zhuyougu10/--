@@ -1,8 +1,4 @@
 <template>
-  <div v-if="isMobile" class="mobile-layout">
-    <router-view />
-  </div>
-
   <a-layout class="main-layout">
     <a-layout-sider
       v-model:collapsed="collapsed"
@@ -21,7 +17,7 @@
         theme="dark"
         mode="inline"
       >
-        <a-menu-item key="dashboard" @click="$router.push('/dashboard')">
+        <a-menu-item v-if="userStore.isAdmin" key="dashboard" @click="$router.push('/dashboard')">
           <template #icon><DashboardOutlined /></template>
           <span>仪表盘</span>
         </a-menu-item>
@@ -45,9 +41,13 @@
           <template #icon><ScanOutlined /></template>
           <span>扫码核销</span>
         </a-menu-item>
-        <a-menu-item key="user" @click="$router.push('/user')">
+        <a-menu-item v-if="userStore.isAdmin" key="user" @click="$router.push('/user')">
           <template #icon><UserOutlined /></template>
           <span>用户管理</span>
+        </a-menu-item>
+        <a-menu-item v-if="userStore.isAdmin" key="admin-users" @click="$router.push('/admin-users')">
+          <template #icon><TeamOutlined /></template>
+          <span>后台账号</span>
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   DashboardOutlined,
@@ -88,6 +88,7 @@ import {
   FileTextOutlined,
   ScanOutlined,
   UserOutlined,
+  TeamOutlined,
   MenuOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/store/modules/user'
@@ -107,10 +108,24 @@ const selectedKeys = computed(() => {
   if (path.includes('/booking')) return ['booking']
   if (path.includes('/checkin')) return ['checkin']
   if (path.includes('/user')) return ['user']
+  if (path.includes('/admin-users')) return ['admin-users']
   return ['dashboard']
 })
 
 const userName = computed(() => userStore.username)
+
+onMounted(async () => {
+  if (userStore.token && !userStore.userInfo) {
+    try {
+      const profile = await userStore.fetchProfile()
+      if (route.meta?.roles && profile?.role && !route.meta.roles.includes(profile.role)) {
+        router.replace(profile.role === 'VENUE_STAFF' ? '/venue' : '/dashboard')
+      }
+    } catch {
+      router.replace('/login')
+    }
+  }
+})
 
 const logout = () => {
   userStore.clearAuth()
@@ -121,11 +136,6 @@ const logout = () => {
 <style scoped>
 .main-layout {
   min-height: 100vh;
-}
-
-.mobile-layout {
-  min-height: 100vh;
-  background: #f5f5f5;
 }
 
 .logo {

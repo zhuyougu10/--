@@ -247,3 +247,106 @@
 | 2026-04-03 00:xx | 小程序外链二维码加载失败 `ERR_CONNECTION_CLOSED` | 1 | 放弃外链服务，改为本地 Canvas 渲染二维码 |
 | 2026-04-03 00:xx | `qrcode` 库报错 `You need to specify a canvas element` | 1 | 改用 `qrcode-generator + uni.createCanvasContext` |
 | 2026-04-03 01:xx | 用户反馈二维码仍不可扫 | 1 | 已持续优化渲染参数，后续需真机联调确认最终可扫稳定性 |
+
+## Session: 2026-04-23
+
+### Phase 0: 会话接管与规划文件恢复
+- **Status:** complete
+- **Started:** 2026-04-23
+- Actions taken:
+  - 按 Planning with Files 要求先检查会话 catchup
+  - 发现用户说明中的默认脚本路径不存在，改为使用本机实际安装路径下的 `session-catchup.py`
+  - 读取 `task_plan.md`、`findings.md`、`progress.md`，恢复当前项目上下文
+  - 确认当前最近未完成事项仍是“小程序二维码可扫性优化与管理端联调验证”
+- Files created/modified:
+  - progress.md (更新)
+
+## Error Log (本次会话追加)
+| Timestamp | Error | Attempt | Resolution |
+|-----------|-------|---------|------------|
+| 2026-04-23 00:xx | `C:\Users\猪油骨\.cursor\skills\planning-with-files\scripts\session-catchup.py` 不存在 | 1 | 改用 `C:\Users\猪油骨\.claude\skills\planning-with-files\scripts\session-catchup.py` 执行 catchup |
+
+### Phase 11: 场馆管理员角色现状梳理
+- **Status:** in_progress
+- Actions taken:
+  - 检查数据库与权限模型，确认已存在 `VENUE_STAFF` 角色与 `venue_staff(admin_user_id, venue_id)` 多对多关联表
+  - 检查后台登录链路，确认 `AuthService#adminLogin` 当前固定签发 `ADMIN` 角色
+  - 检查权限切面，确认 `PermissionAspect` 对后台 token 存在管理员直通逻辑
+  - 检查球馆、场地、预约、核销相关服务，确认当前未按“管理员可管理球馆”做数据范围收口
+- Files created/modified:
+  - task_plan.md (更新)
+  - findings.md (更新)
+  - progress.md (更新)
+
+### Phase 12: 场馆管理员规格与计划文档产出
+- **Status:** complete
+- Actions taken:
+  - 与用户确认角色能力边界：复用 `VENUE_STAFF`，仅管理授权球馆的场地、时段、预约、核销
+  - 产出规格文档 `docs/superpowers/specs/2026-04-23-venue-manager-role-design.md`
+  - 产出实施计划 `docs/superpowers/plans/2026-04-23-venue-manager-role.md`
+  - 进行两轮文档审阅并修正，补齐后台直通条件、零授权处理、用户管理入口、违约入口、仪表盘限制、分配球馆运营入口、绑定即时生效口径与唯一性约束等细节
+- Files created/modified:
+  - docs/superpowers/specs/2026-04-23-venue-manager-role-design.md (创建)
+  - docs/superpowers/plans/2026-04-23-venue-manager-role.md (创建)
+  - task_plan.md (更新)
+  - findings.md (更新)
+  - progress.md (更新)
+
+### Phase 13: 场馆管理员角色实现与验证
+- **Status:** complete
+- Actions taken:
+  - 新增后台角色查询与球馆绑定查询仓储：`AdminRoleRepository`、`VenueStaffRepository`
+  - 新增 `AdminVenueAccessService`，统一处理后台当前角色判断与球馆范围校验
+  - 修复后台登录角色签发：不再固定 `ADMIN`，改为按 `ADMIN > VENUE_STAFF` 解析；未分配球馆的场馆管理员禁止登录
+  - 修复 `PermissionAspect`，仅 `ADMIN` 可直通，其余后台角色必须过真实权限判断
+  - 收口球馆、场地、预约、核销、违约服务的数据范围，只允许场馆管理员访问已分配球馆
+  - 新增后台账号管理接口与页面，支持为非管理员账号分配可管理球馆
+  - 保存绑定时自动补齐 `VENUE_STAFF`；清空绑定时撤销该角色；禁止给 `ADMIN` 账号配置受限球馆
+  - 管理端按角色隐藏仪表盘、用户管理、后台账号入口，并限制球馆页“新建/删除”按钮
+  - 调整移动端路由：登录后默认进核销页，但后续允许访问其它管理页面
+  - 新增后端单测：`AuthServiceTest`、`PermissionAspectTest`、`AdminVenueAccessServiceTest`
+  - 完成独立复核，最终结论为 `approved`
+- Files created/modified:
+  - backend/src/main/java/com/stadium/booking/repository/AdminRoleRepository.java (创建)
+  - backend/src/main/java/com/stadium/booking/repository/VenueStaffRepository.java (创建)
+  - backend/src/main/java/com/stadium/booking/service/AdminVenueAccessService.java (创建)
+  - backend/src/main/java/com/stadium/booking/service/AdminUserManagementService.java (创建)
+  - backend/src/main/java/com/stadium/booking/controller/admin/AdminUserAdminController.java (创建)
+  - backend/src/main/java/com/stadium/booking/dto/request/AdminUserVenueAssignRequest.java (创建)
+  - backend/src/main/java/com/stadium/booking/dto/response/AdminUserResponse.java (创建)
+  - backend/src/main/resources/db/migration/V10__update_venue_staff_permissions.sql (创建)
+  - backend/src/main/java/com/stadium/booking/service/AuthService.java (更新)
+  - backend/src/main/java/com/stadium/booking/security/PermissionAspect.java (更新)
+  - backend/src/main/java/com/stadium/booking/security/UserContext.java (更新)
+  - backend/src/main/java/com/stadium/booking/controller/admin/AdminAuthController.java (更新)
+  - backend/src/main/java/com/stadium/booking/controller/admin/UserAdminController.java (更新)
+  - backend/src/main/java/com/stadium/booking/controller/admin/ViolationAdminController.java (更新)
+  - backend/src/main/java/com/stadium/booking/service/VenueService.java (更新)
+  - backend/src/main/java/com/stadium/booking/service/CourtService.java (更新)
+  - backend/src/main/java/com/stadium/booking/service/BookingService.java (更新)
+  - backend/src/main/java/com/stadium/booking/service/CheckinService.java (更新)
+  - backend/src/main/java/com/stadium/booking/service/ViolationService.java (更新)
+  - backend/src/main/java/com/stadium/booking/repository/AdminUserRepository.java (更新)
+  - backend/src/main/java/com/stadium/booking/repository/VenueRepository.java (更新)
+  - backend/src/main/java/com/stadium/booking/dto/response/LoginResponse.java (更新)
+  - backend/src/test/java/com/stadium/booking/service/AuthServiceTest.java (创建)
+  - backend/src/test/java/com/stadium/booking/security/PermissionAspectTest.java (创建)
+  - backend/src/test/java/com/stadium/booking/service/AdminVenueAccessServiceTest.java (创建)
+  - admin-web/src/api/admin-user.js (创建)
+  - admin-web/src/views/admin-user/list.vue (创建)
+  - admin-web/src/store/modules/user.js (更新)
+  - admin-web/src/views/login/index.vue (更新)
+  - admin-web/src/router/index.js (更新)
+  - admin-web/src/components/layout/MainLayout.vue (更新)
+  - admin-web/src/views/venue/list.vue (更新)
+  - task_plan.md (更新)
+  - findings.md (更新)
+  - progress.md (更新)
+
+## Test Results (追加)
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| 后端角色与范围单测 | `mvn -q "-Dtest=AuthServiceTest,PermissionAspectTest,AdminVenueAccessServiceTest" test` | 通过 | 通过 | ✓ |
+| 后端全量测试 | `mvn -q test` | 通过 | 通过 | ✓ |
+| 后端编译 | `mvn -q -DskipTests compile` | 通过 | 通过 | ✓ |
+| 管理端构建 | `npm run build` | 通过 | 通过 | ✓ |

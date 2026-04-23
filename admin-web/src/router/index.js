@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { isMobileDevice } from '@/utils/device'
 
 const routes = [
   {
@@ -17,7 +16,7 @@ const routes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '仪表盘', icon: 'dashboard' }
+        meta: { title: '仪表盘', icon: 'dashboard', roles: ['ADMIN'] }
       },
       {
         path: 'venue',
@@ -29,7 +28,7 @@ const routes = [
         path: 'venue/create',
         name: 'VenueCreate',
         component: () => import('@/views/venue/form.vue'),
-        meta: { title: '新建球馆', hidden: true }
+        meta: { title: '新建球馆', hidden: true, roles: ['ADMIN'] }
       },
       {
         path: 'venue/:id/edit',
@@ -77,7 +76,13 @@ const routes = [
         path: 'user',
         name: 'UserList',
         component: () => import('@/views/user/list.vue'),
-        meta: { title: '用户管理', icon: 'user' }
+        meta: { title: '用户管理', icon: 'user', roles: ['ADMIN'] }
+      },
+      {
+        path: 'admin-users',
+        name: 'AdminUserList',
+        component: () => import('@/views/admin-user/list.vue'),
+        meta: { title: '后台账号', icon: 'team', roles: ['ADMIN'] }
       },
       {
         path: 'm/checkin',
@@ -96,15 +101,16 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('admin_token')
+  const role = localStorage.getItem('admin_role') || ''
   const isMobileLogin = localStorage.getItem('admin_is_mobile') === '1'
-  const shouldGoCheckin = isMobileLogin || isMobileDevice()
+  const shouldGoCheckin = isMobileLogin
   
   if (to.meta.requiresAuth !== false && !token) {
     next('/login')
   } else if (to.path === '/login' && token) {
-    next(shouldGoCheckin ? '/checkin' : '/dashboard')
-  } else if (shouldGoCheckin && to.path !== '/checkin' && to.path !== '/m/checkin' && to.path !== '/login') {
-    next('/checkin')
+    next(shouldGoCheckin ? '/checkin' : (role === 'VENUE_STAFF' ? '/venue' : '/dashboard'))
+  } else if (to.meta?.roles && role && !to.meta.roles.includes(role)) {
+    next(shouldGoCheckin ? '/checkin' : (role === 'VENUE_STAFF' ? '/venue' : '/dashboard'))
   } else {
     next()
   }

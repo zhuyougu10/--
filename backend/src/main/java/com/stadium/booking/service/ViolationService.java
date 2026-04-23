@@ -32,6 +32,7 @@ public class ViolationService {
     private final UserRepository userRepository;
     private final VenueRepository venueRepository;
     private final AuditService auditService;
+    private final AdminVenueAccessService adminVenueAccessService;
 
     private static final int NO_SHOW_THRESHOLD = 3;
     private static final int BAN_DAYS = 7;
@@ -41,6 +42,7 @@ public class ViolationService {
     public ViolationResponse markNoShow(MarkNoShowRequest request) {
         Booking booking = bookingRepository.findByBookingNo(request.getBookingNo())
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "预约不存在"));
+        adminVenueAccessService.checkVenueAccess(booking.getVenueId());
 
         if (booking.getStatus() != BookingStatus.CONFIRMED.getCode()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "只能标记已确认的预约为爽约");

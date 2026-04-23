@@ -2,7 +2,7 @@
   <div class="venue-list">
     <div class="page-header">
       <h2>球馆管理</h2>
-      <a-button type="primary" @click="$router.push('/venue/create')">
+      <a-button v-if="userStore.isAdmin" type="primary" @click="$router.push('/venue/create')">
         <template #icon><PlusOutlined /></template>
         新建球馆
       </a-button>
@@ -44,7 +44,7 @@
               </a-button>
             </a-popconfirm>
             <a-popconfirm title="确定删除该球馆？" @confirm="handleDelete(record)">
-              <a-button type="link" size="small" danger>
+              <a-button v-if="userStore.isAdmin" type="link" size="small" danger>
                 删除
               </a-button>
             </a-popconfirm>
@@ -61,9 +61,11 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { getVenueList, updateVenueStatus, deleteVenue } from '@/api/venue'
+import { useUserStore } from '@/store/modules/user'
 import { ApiError } from '@/utils/request'
 
 const router = useRouter()
+const userStore = useUserStore()
 const loading = ref(false)
 const venues = ref([])
 const pagination = reactive({

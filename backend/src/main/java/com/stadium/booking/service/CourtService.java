@@ -22,8 +22,10 @@ import java.util.stream.Collectors;
 public class CourtService {
     private final CourtRepository courtRepository;
     private final VenueRepository venueRepository;
+    private final AdminVenueAccessService adminVenueAccessService;
 
     public List<CourtResponse> listByVenue(Long venueId) {
+        adminVenueAccessService.checkVenueAccess(venueId);
         return courtRepository.findByVenueId(venueId).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
@@ -31,9 +33,17 @@ public class CourtService {
 
     public IPage<CourtResponse> listPage(Integer current, Integer size, Long venueId, Integer status) {
         LambdaQueryWrapper<Court> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (venueId != null) {
+            adminVenueAccessService.checkVenueAccess(venueId);
             wrapper.eq(Court::getVenueId, venueId);
+        } else if (adminVenueAccessService.isCurrentVenueStaffRole()) {
+            List<Long> managedVenueIds = adminVenueAccessService.getCurrentManagedVenueIds();
+            if (managedVenueIds.isEmpty()) {
+                wrapper.apply("1 = 0");
+            } else {
+                wrapper.in(Court::getVenueId, managedVenueIds);
+            }
         }
         if (status != null) {
             wrapper.eq(Court::getStatus, status);
@@ -47,11 +57,13 @@ public class CourtService {
     public CourtResponse getById(Long id) {
         Court court = courtRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "场地不存在"));
+        adminVenueAccessService.checkVenueAccess(court.getVenueId());
         return toResponse(court);
     }
 
     @Transactional
     public CourtResponse create(CourtCreateRequest request) {
+        adminVenueAccessService.checkVenueAccess(request.getVenueId());
         Venue venue = venueRepository.findById(request.getVenueId())
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
 
@@ -79,6 +91,7 @@ public class CourtService {
     public CourtResponse update(Long id, CourtCreateRequest request) {
         Court court = courtRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "场地不存在"));
+        adminVenueAccessService.checkVenueAccess(court.getVenueId());
 
         court.setName(request.getName());
         court.setCourtNo(request.getCourtNo());
@@ -95,6 +108,7 @@ public class CourtService {
     public void updateStatus(Long id, Integer status, String reason) {
         Court court = courtRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "场地不存在"));
+        adminVenueAccessService.checkVenueAccess(court.getVenueId());
         court.setStatus(status);
         court.setStatusReason(reason);
         courtRepository.updateById(court);
@@ -104,6 +118,7 @@ public class CourtService {
     public void delete(Long id) {
         Court court = courtRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "场地不存在"));
+        adminVenueAccessService.checkVenueAccess(court.getVenueId());
         courtRepository.deleteById(id);
     }
 

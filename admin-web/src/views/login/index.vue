@@ -68,7 +68,8 @@ const handleLogin = async () => {
   try {
     const result = await userStore.login(formState)
     message.success(result.message || '登录成功')
-    router.push(isMobileDevice() ? '/checkin' : '/dashboard')
+    const target = isMobileDevice() ? '/checkin' : (result.data.role === 'VENUE_STAFF' ? '/venue' : '/dashboard')
+    router.push(target)
   } catch (e) {
     if (e instanceof ApiError) {
       message.error(e.message)

@@ -25,6 +25,7 @@ public class VenueService {
     private final VenueRepository venueRepository;
     private final CourtRepository courtRepository;
     private final CourtService courtService;
+    private final AdminVenueAccessService adminVenueAccessService;
 
     public List<VenueResponse> listAll() {
         return venueRepository.findAllActive().stream()
@@ -35,6 +36,14 @@ public class VenueService {
     public IPage<VenueResponse> listPage(Integer current, Integer size, String sportType, Integer status) {
         LambdaQueryWrapper<Venue> wrapper = new LambdaQueryWrapper<>();
         wrapper.isNull(Venue::getDeletedAt);
+        if (adminVenueAccessService.isCurrentVenueStaffRole()) {
+            List<Long> venueIds = adminVenueAccessService.getCurrentManagedVenueIds();
+            if (venueIds.isEmpty()) {
+                wrapper.apply("1 = 0");
+            } else {
+                wrapper.in(Venue::getId, venueIds);
+            }
+        }
         if (sportType != null && !sportType.isEmpty()) {
             wrapper.eq(Venue::getSportType, sportType);
         }
@@ -50,6 +59,7 @@ public class VenueService {
     public VenueResponse getById(Long id) {
         Venue venue = venueRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
+        adminVenueAccessService.checkVenueAccess(venue.getId());
         return toDetailResponse(venue);
     }
 
@@ -93,6 +103,7 @@ public class VenueService {
     public VenueResponse update(Long id, VenueCreateRequest request) {
         Venue venue = venueRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
+        adminVenueAccessService.checkVenueAccess(venue.getId());
 
         venue.setName(request.getName());
         venue.setSportType(request.getSportType());
@@ -121,6 +132,7 @@ public class VenueService {
     public void updateStatus(Long id, Integer status) {
         Venue venue = venueRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
+        adminVenueAccessService.checkVenueAccess(venue.getId());
         venue.setStatus(status);
         venueRepository.updateById(venue);
     }
@@ -129,6 +141,7 @@ public class VenueService {
     public void delete(Long id) {
         Venue venue = venueRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
+        adminVenueAccessService.checkVenueAccess(venue.getId());
         venueRepository.deleteById(id);
     }
 
