@@ -7,6 +7,14 @@ export const getUserList = (params) => {
   })
 }
 
+export const createPresetUser = (data) => {
+  return request({
+    url: '/admin/users',
+    method: 'POST',
+    data
+  })
+}
+
 export const getUserDetail = (id) => {
   return request({
     url: `/admin/users/${id}`

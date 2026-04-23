@@ -2,6 +2,7 @@ package com.stadium.booking.controller.admin;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stadium.booking.common.result.Result;
+import com.stadium.booking.dto.request.UserPresetCreateRequest;
 import com.stadium.booking.dto.response.BookingResponse;
 import com.stadium.booking.dto.response.UserResponse;
 import com.stadium.booking.dto.response.ViolationResponse;
@@ -11,6 +12,7 @@ import com.stadium.booking.service.ViolationService;
 import com.stadium.booking.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +37,13 @@ public class UserAdminController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer status) {
         return Result.success(userService.listPage(current, size, keyword, status));
+    }
+
+    @Operation(summary = "创建预置待绑定用户")
+    @PostMapping
+    @RequirePermission("user:update")
+    public Result<UserResponse> create(@Valid @RequestBody UserPresetCreateRequest request) {
+        return Result.success(userService.createPresetUser(request));
     }
 
     @Operation(summary = "获取用户详情")

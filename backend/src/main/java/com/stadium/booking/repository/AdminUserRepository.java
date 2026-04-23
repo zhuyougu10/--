@@ -12,6 +12,9 @@ public interface AdminUserRepository extends BaseMapper<AdminUser> {
     @Select("SELECT * FROM admin_user WHERE username = #{username} AND deleted_at IS NULL")
     Optional<AdminUser> findByUsername(String username);
 
+    @Select("SELECT * FROM admin_user WHERE phone = #{phone} AND deleted_at IS NULL")
+    Optional<AdminUser> findByPhone(String phone);
+
     @Select("SELECT * FROM admin_user WHERE id = #{id} AND deleted_at IS NULL")
     Optional<AdminUser> findById(Long id);
 

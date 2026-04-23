@@ -1,5 +1,35 @@
 # Progress Log
 
+## Session: 2026-04-23
+
+### Phase 0: 工作记忆机制确认
+- **Status:** complete
+- **Started:** 2026-04-23
+- Actions taken:
+  - 检查项目根目录下 `task_plan.md`、`findings.md`、`progress.md` 是否已存在
+  - 读取三份文件，确认当前仓库已具备持久化工作记忆基础
+  - 将当前会话约定为默认遵循 Planning with Files 规则
+- Files created/modified:
+  - task_plan.md (更新)
+  - findings.md (更新)
+  - progress.md (更新)
+
+### Phase 1: 管理端后台账号新增功能现状确认
+- **Status:** in_progress
+- **Started:** 2026-04-23
+- Actions taken:
+  - 搜索后台账号管理相关文件与关键字
+  - 确认现有前端存在 `/admin-users` 页面与 `admin-user.js` 接口模块
+  - 确认后端存在 `/admin/admin-users` 管理接口
+  - 初步判断当前仅具备列表/球馆分配能力，缺少新增入口
+  - 调度子代理分别梳理后台账号管理与普通用户管理链路
+  - 确认两条链路都没有新增接口与新增页面
+  - 确认普通用户现有创建语义依赖“微信首次登录自动创建”或“预置待绑定数据”
+- Files created/modified:
+  - task_plan.md (更新)
+  - findings.md (更新)
+  - progress.md (更新)
+
 ## Session: 2026-02-13
 
 ### Phase 1: 目录结构创建
@@ -347,6 +377,51 @@
 | Test | Input | Expected | Actual | Status |
 |------|-------|----------|--------|--------|
 | 后端角色与范围单测 | `mvn -q "-Dtest=AuthServiceTest,PermissionAspectTest,AdminVenueAccessServiceTest" test` | 通过 | 通过 | ✓ |
-| 后端全量测试 | `mvn -q test` | 通过 | 通过 | ✓ |
+
+### Phase 2: 管理端新增用户功能设计边界确认
+- **Status:** complete
+- Actions taken:
+  - 与用户确认“添加用户”同时包含后台账号与普通用户
+  - 确认普通用户采用“预置待绑定”模式
+  - 确认后台账号新增只允许创建“场馆管理员”
+  - 准备进入最小实现方案确认
+- 已补充实现约束：后台账号需同时绑定角色与球馆，普通用户需保持未绑定语义
+- Files created/modified:
+  - task_plan.md (更新)
+  - findings.md (更新)
+  - progress.md (更新)
+
+### Phase 3: 管理端新增用户功能实现与验证
+- **Status:** complete
+- Actions taken:
+  - 新增后台账号创建 DTO、服务方法与 `POST /admin/admin-users`
+  - 新增预置用户创建 DTO、服务方法与 `POST /admin/users`
+  - 管理端“后台账号管理”页增加新增场馆管理员弹窗
+  - 管理端“用户管理”页增加新增预置用户弹窗
+  - 修复普通用户页查询参数与预约/违约记录读取契约
+  - 代码审阅后补齐请求长度/格式校验、密码最小长度与 `student_no` 唯一索引
+- Files created/modified:
+  - backend/src/main/java/com/stadium/booking/dto/request/AdminUserCreateRequest.java (创建)
+  - backend/src/main/java/com/stadium/booking/dto/request/UserPresetCreateRequest.java (创建)
+  - backend/src/main/java/com/stadium/booking/controller/admin/AdminUserAdminController.java (更新)
+  - backend/src/main/java/com/stadium/booking/controller/admin/UserAdminController.java (更新)
+  - backend/src/main/java/com/stadium/booking/service/AdminUserManagementService.java (更新)
+  - backend/src/main/java/com/stadium/booking/service/UserService.java (更新)
+  - backend/src/main/java/com/stadium/booking/repository/AdminUserRepository.java (更新)
+  - backend/src/main/java/com/stadium/booking/repository/UserRepository.java (更新)
+  - backend/src/main/resources/db/migration/V11__add_unique_student_no_to_user.sql (创建)
+  - backend/src/test/java/com/stadium/booking/service/AdminUserManagementServiceTest.java (创建)
+  - backend/src/test/java/com/stadium/booking/service/UserServiceTest.java (创建)
+  - admin-web/src/api/admin-user.js (更新)
+  - admin-web/src/api/user.js (更新)
+  - admin-web/src/views/admin-user/list.vue (更新)
+  - admin-web/src/views/user/list.vue (更新)
+  - docs/superpowers/specs/2026-04-23-admin-user-create-design.md (创建)
+  - docs/superpowers/plans/2026-04-23-admin-user-create.md (创建)
+
+## Test Results (再次追加)
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| 后端新增功能单测 | `mvn -q "-Dtest=AdminUserManagementServiceTest,UserServiceTest" test` | 通过 | 通过 | ✓ |
 | 后端编译 | `mvn -q -DskipTests compile` | 通过 | 通过 | ✓ |
 | 管理端构建 | `npm run build` | 通过 | 通过 | ✓ |

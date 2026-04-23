@@ -1,7 +1,9 @@
 package com.stadium.booking.service;
 
+import cn.hutool.crypto.digest.BCrypt;
 import com.stadium.booking.common.exception.BusinessException;
 import com.stadium.booking.common.result.ErrorCode;
+import com.stadium.booking.dto.request.AdminUserCreateRequest;
 import com.stadium.booking.dto.request.AdminUserVenueAssignRequest;
 import com.stadium.booking.dto.response.AdminUserResponse;
 import com.stadium.booking.entity.AdminUser;
@@ -11,6 +13,7 @@ import com.stadium.booking.repository.AdminUserRepository;
 import com.stadium.booking.repository.VenueRepository;
 import com.stadium.booking.repository.VenueStaffRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,45 @@ public class AdminUserManagementService {
     public List<AdminUserResponse> listAll() {
         List<AdminUser> adminUsers = adminUserRepository.findAll();
         return adminUsers.stream().map(this::toResponse).toList();
+    }
+
+    @Transactional
+    public AdminUserResponse createAdminUser(AdminUserCreateRequest request) {
+        String username = normalizeRequired(request.getUsername(), "用户名不能为空");
+        String name = normalizeRequired(request.getName(), "姓名不能为空");
+        String password = normalizeRequired(request.getPassword(), "初始密码不能为空");
+        List<Long> venueIds = request.getVenueIds() == null ? List.of() : new ArrayList<>(new LinkedHashSet<>(request.getVenueIds()));
+
+        if (venueIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "至少分配一个球馆");
+        }
+        if (adminUserRepository.findByUsername(username).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "用户名已存在");
+        }
+
+        List<Long> existingVenueIds = venueRepository.findByIds(venueIds).stream().map(Venue::getId).toList();
+        if (existingVenueIds.size() != venueIds.size()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "存在无效球馆，无法创建账号");
+        }
+
+        AdminUser adminUser = new AdminUser();
+        adminUser.setUsername(username);
+        adminUser.setName(name);
+        adminUser.setPhone(normalizeOptional(request.getPhone()));
+        adminUser.setEmail(normalizeOptional(request.getEmail()));
+        adminUser.setPasswordHash(BCrypt.hashpw(password));
+        adminUser.setStatus(1);
+        try {
+            adminUserRepository.insert(adminUser);
+        } catch (DuplicateKeyException exception) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "用户名已存在");
+        }
+
+        adminRoleRepository.addRoleToAdminUser(adminUser.getId(), "VENUE_STAFF");
+        for (Long venueId : venueIds) {
+            venueStaffRepository.insertBinding(adminUser.getId(), venueId);
+        }
+        return toResponse(adminUser);
     }
 
     @Transactional
@@ -90,5 +132,21 @@ public class AdminUserManagementService {
             case "VENUE_STAFF" -> "场馆管理员";
             default -> roleCode;
         };
+    }
+
+    private String normalizeRequired(String value, String message) {
+        String normalized = normalizeOptional(value);
+        if (normalized == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, message);
+        }
+        return normalized;
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 }

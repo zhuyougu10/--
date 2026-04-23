@@ -2,22 +2,16 @@
   <div class="user-list">
     <div class="page-header">
       <h2>用户管理</h2>
+      <a-button type="primary" @click="openCreateModal">新增预置用户</a-button>
     </div>
     
     <a-card class="search-card">
       <a-form layout="inline">
-        <a-form-item label="用户名">
+        <a-form-item label="关键词">
           <a-input
-            v-model:value="searchParams.name"
-            placeholder="用户名/昵称"
-            style="width: 150px"
-          />
-        </a-form-item>
-        <a-form-item label="手机号">
-          <a-input
-            v-model:value="searchParams.phone"
-            placeholder="手机号"
-            style="width: 150px"
+            v-model:value="searchParams.keyword"
+            placeholder="姓名/手机号"
+            style="width: 180px"
           />
         </a-form-item>
         <a-form-item label="状态">
@@ -72,6 +66,38 @@
         </template>
       </template>
     </a-table>
+
+    <a-modal
+      v-model:open="createVisible"
+      title="新增预置用户"
+      :confirm-loading="createLoading"
+      @ok="handleCreateUser"
+      @cancel="resetCreateForm"
+    >
+      <a-form
+        ref="createFormRef"
+        :model="createForm"
+        :rules="createRules"
+        layout="vertical"
+      >
+        <a-form-item label="姓名" name="name">
+          <a-input v-model:value="createForm.name" placeholder="请输入姓名" />
+        </a-form-item>
+        <a-form-item label="手机号" name="phone">
+          <a-input v-model:value="createForm.phone" placeholder="请输入手机号（选填）" />
+        </a-form-item>
+        <a-form-item label="工号/学号" name="studentNo">
+          <a-input v-model:value="createForm.studentNo" placeholder="请输入工号或学号" />
+        </a-form-item>
+        <a-form-item label="用户类型" name="userType">
+          <a-select v-model:value="createForm.userType" placeholder="请选择用户类型">
+            <a-select-option :value="1">学生</a-select-option>
+            <a-select-option :value="2">教师</a-select-option>
+            <a-select-option :value="3">外部人员</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-modal>
     
     <a-modal
       v-model:open="detailVisible"
@@ -133,24 +159,39 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { getUserList, getUserBookings, getUserViolations, updateUserStatus } from '@/api/user'
+import { createPresetUser, getUserList, getUserBookings, getUserViolations, updateUserStatus } from '@/api/user'
 import { ApiError } from '@/utils/request'
 
 const loading = ref(false)
+const createLoading = ref(false)
 const users = ref([])
 const detailVisible = ref(false)
+const createVisible = ref(false)
 const currentUser = ref(null)
 const userBookings = ref([])
 const userViolations = ref([])
 const bookingsLoading = ref(false)
 const violationsLoading = ref(false)
 const activeTab = ref('bookings')
+const createFormRef = ref(null)
 
 const searchParams = reactive({
-  name: '',
-  phone: '',
+  keyword: '',
   status: null
 })
+
+const createForm = reactive({
+  name: '',
+  phone: '',
+  studentNo: '',
+  userType: undefined
+})
+
+const createRules = {
+  name: [{ required: true, message: '请输入姓名' }],
+  studentNo: [{ required: true, message: '请输入工号/学号' }],
+  userType: [{ required: true, message: '请选择用户类型' }]
+}
 
 const pagination = reactive({
   current: 1,
@@ -196,8 +237,7 @@ const loadUsers = async () => {
     const params = {
       current: pagination.current,
       size: pagination.pageSize,
-      name: searchParams.name || undefined,
-      phone: searchParams.phone || undefined,
+      keyword: searchParams.keyword || undefined,
       status: searchParams.status
     }
     const result = await getUserList(params)
@@ -220,8 +260,7 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  searchParams.name = ''
-  searchParams.phone = ''
+  searchParams.keyword = ''
   searchParams.status = null
   handleSearch()
 }
@@ -230,6 +269,45 @@ const handleTableChange = (pag) => {
   pagination.current = pag.current
   pagination.pageSize = pag.pageSize
   loadUsers()
+}
+
+const resetCreateForm = () => {
+  createForm.name = ''
+  createForm.phone = ''
+  createForm.studentNo = ''
+  createForm.userType = undefined
+  createFormRef.value?.clearValidate()
+}
+
+const openCreateModal = () => {
+  resetCreateForm()
+  createVisible.value = true
+}
+
+const handleCreateUser = async () => {
+  try {
+    await createFormRef.value.validate()
+    createLoading.value = true
+    const result = await createPresetUser({
+      ...createForm,
+      phone: createForm.phone || undefined
+    })
+    message.success(result.message || '预置用户创建成功')
+    createVisible.value = false
+    resetCreateForm()
+    pagination.current = 1
+    await loadUsers()
+  } catch (e) {
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else if (e?.errorFields) {
+      return
+    } else {
+      message.error('创建预置用户失败')
+    }
+  } finally {
+    createLoading.value = false
+  }
 }
 
 const handleDetail = async (record) => {
@@ -243,7 +321,7 @@ const loadUserBookings = async (userId) => {
   bookingsLoading.value = true
   try {
     const result = await getUserBookings(userId, { current: 1, size: 10 })
-    userBookings.value = result.data.records || []
+    userBookings.value = Array.isArray(result.data) ? result.data : (result.data?.records || [])
   } catch (e) {
     if (e instanceof ApiError) {
       message.error(e.message)
@@ -257,7 +335,7 @@ const loadUserViolations = async (userId) => {
   violationsLoading.value = true
   try {
     const result = await getUserViolations(userId, { current: 1, size: 10 })
-    userViolations.value = result.data.records || []
+    userViolations.value = Array.isArray(result.data) ? result.data : (result.data?.records || [])
   } catch (e) {
     if (e instanceof ApiError) {
       message.error(e.message)

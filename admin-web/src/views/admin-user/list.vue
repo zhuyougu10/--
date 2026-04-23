@@ -2,6 +2,7 @@
   <div class="admin-user-list">
     <div class="page-header">
       <h2>后台账号管理</h2>
+      <a-button type="primary" @click="openCreateModal">新增场馆管理员</a-button>
     </div>
 
     <a-alert
@@ -47,6 +48,46 @@
     </a-table>
 
     <a-modal
+      v-model:open="createModalVisible"
+      title="新增场馆管理员"
+      :confirm-loading="createSaving"
+      @ok="handleCreateAdminUser"
+      @cancel="resetCreateForm"
+    >
+      <a-form
+        ref="createFormRef"
+        :model="createForm"
+        :rules="createRules"
+        layout="vertical"
+      >
+        <a-form-item label="用户名" name="username">
+          <a-input v-model:value="createForm.username" placeholder="请输入登录用户名" />
+        </a-form-item>
+        <a-form-item label="姓名" name="name">
+          <a-input v-model:value="createForm.name" placeholder="请输入姓名" />
+        </a-form-item>
+        <a-form-item label="手机号" name="phone">
+          <a-input v-model:value="createForm.phone" placeholder="请输入手机号（选填）" />
+        </a-form-item>
+        <a-form-item label="邮箱" name="email">
+          <a-input v-model:value="createForm.email" placeholder="请输入邮箱（选填）" />
+        </a-form-item>
+        <a-form-item label="初始密码" name="password">
+          <a-input-password v-model:value="createForm.password" placeholder="请输入初始密码" />
+        </a-form-item>
+        <a-form-item label="可管理球馆" name="venueIds">
+          <a-select
+            v-model:value="createForm.venueIds"
+            mode="multiple"
+            style="width: 100%"
+            placeholder="请选择至少一个球馆"
+            :options="venueOptions"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <a-modal
       v-model:open="modalVisible"
       title="分配可管理球馆"
       :confirm-loading="saving"
@@ -67,19 +108,41 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
-import { getAdminUserList, updateAdminUserVenues } from '@/api/admin-user'
+import { createAdminUser, getAdminUserList, updateAdminUserVenues } from '@/api/admin-user'
 import { getVenueList } from '@/api/venue'
 import { ApiError } from '@/utils/request'
 
 const loading = ref(false)
 const saving = ref(false)
+const createSaving = ref(false)
 const adminUsers = ref([])
 const venueOptions = ref([])
 const modalVisible = ref(false)
+const createModalVisible = ref(false)
 const currentAdminUser = ref(null)
 const selectedVenueIds = ref([])
+const createFormRef = ref(null)
+
+const createForm = reactive({
+  username: '',
+  name: '',
+  phone: '',
+  email: '',
+  password: '',
+  venueIds: []
+})
+
+const createRules = {
+  username: [{ required: true, message: '请输入用户名' }],
+  name: [{ required: true, message: '请输入姓名' }],
+  password: [
+    { required: true, message: '请输入初始密码' },
+    { min: 8, message: '初始密码至少 8 位' }
+  ],
+  venueIds: [{ required: true, type: 'array', min: 1, message: '请至少选择一个球馆' }]
+}
 
 const columns = [
   { title: '用户名', dataIndex: 'username', key: 'username' },
@@ -118,6 +181,47 @@ const openVenueModal = (record) => {
   currentAdminUser.value = record
   selectedVenueIds.value = [...(record.venueIds || [])]
   modalVisible.value = true
+}
+
+const resetCreateForm = () => {
+  createForm.username = ''
+  createForm.name = ''
+  createForm.phone = ''
+  createForm.email = ''
+  createForm.password = ''
+  createForm.venueIds = []
+  createFormRef.value?.clearValidate()
+}
+
+const openCreateModal = () => {
+  resetCreateForm()
+  createModalVisible.value = true
+}
+
+const handleCreateAdminUser = async () => {
+  try {
+    await createFormRef.value.validate()
+    createSaving.value = true
+    const result = await createAdminUser({
+      ...createForm,
+      phone: createForm.phone || undefined,
+      email: createForm.email || undefined
+    })
+    message.success(result.message || '场馆管理员创建成功')
+    createModalVisible.value = false
+    resetCreateForm()
+    await loadAdminUsers()
+  } catch (e) {
+    if (e instanceof ApiError) {
+      message.error(e.message)
+    } else if (e?.errorFields) {
+      return
+    } else {
+      message.error('创建场馆管理员失败')
+    }
+  } finally {
+    createSaving.value = false
+  }
 }
 
 const handleSaveVenues = async () => {

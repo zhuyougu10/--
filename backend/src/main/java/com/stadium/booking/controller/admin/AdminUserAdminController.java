@@ -1,13 +1,16 @@
 package com.stadium.booking.controller.admin;
 
 import com.stadium.booking.common.result.Result;
+import com.stadium.booking.dto.request.AdminUserCreateRequest;
 import com.stadium.booking.dto.request.AdminUserVenueAssignRequest;
 import com.stadium.booking.dto.response.AdminUserResponse;
 import com.stadium.booking.service.AdminUserManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,6 +32,12 @@ public class AdminUserAdminController {
     @GetMapping
     public Result<List<AdminUserResponse>> list() {
         return Result.success(adminUserManagementService.listAll());
+    }
+
+    @Operation(summary = "创建场馆管理员账号")
+    @PostMapping
+    public Result<AdminUserResponse> create(@Valid @RequestBody AdminUserCreateRequest request) {
+        return Result.success(adminUserManagementService.createAdminUser(request));
     }
 
     @Operation(summary = "更新后台账号可管理球馆")

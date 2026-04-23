@@ -7,10 +7,12 @@ import com.stadium.booking.common.exception.BusinessException;
 import com.stadium.booking.common.result.ErrorCode;
 import com.stadium.booking.dto.request.UserProfileUpdateRequest;
 import com.stadium.booking.dto.request.BindStudentNoRequest;
+import com.stadium.booking.dto.request.UserPresetCreateRequest;
 import com.stadium.booking.dto.response.UserResponse;
 import com.stadium.booking.entity.User;
 import com.stadium.booking.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -37,6 +39,41 @@ public class UserService {
 
         IPage<User> page = userRepository.selectPage(new Page<>(current, size), wrapper);
         return page.convert(this::toResponse);
+    }
+
+    @Transactional
+    public UserResponse createPresetUser(UserPresetCreateRequest request) {
+        String name = normalizeRequired(request.getName(), "姓名不能为空");
+        String studentNo = normalizeRequired(request.getStudentNo(), "工号/学号不能为空");
+        String phone = normalizeOptional(request.getPhone());
+
+        if (request.getUserType() == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "用户类型不能为空");
+        }
+        if (request.getUserType() < 1 || request.getUserType() > 3) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "用户类型非法");
+        }
+        if (userRepository.findByStudentNo(studentNo).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "工号/学号已存在");
+        }
+        if (phone != null && userRepository.findByPhone(phone).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "手机号已存在");
+        }
+
+        User user = new User();
+        user.setName(name);
+        user.setPhone(phone);
+        user.setStudentNo(studentNo);
+        user.setUserType(request.getUserType());
+        user.setStatus(1);
+        user.setIsBound(0);
+        user.setNoShowCount(0);
+        try {
+            userRepository.insert(user);
+        } catch (DuplicateKeyException exception) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "工号/学号已存在");
+        }
+        return getUserDetail(user.getId());
     }
 
     public UserResponse getUserDetail(Long id) {
@@ -141,5 +178,21 @@ public class UserService {
             case 1 -> "正常";
             default -> "未知";
         };
+    }
+
+    private String normalizeRequired(String value, String message) {
+        String normalized = normalizeOptional(value);
+        if (normalized == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, message);
+        }
+        return normalized;
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 }
