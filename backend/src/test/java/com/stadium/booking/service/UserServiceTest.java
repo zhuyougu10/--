@@ -110,13 +110,13 @@ class UserServiceTest {
 
         verify(userRepository, never()).updateById(currentUser);
         verify(userRepository).updateById(presetUser);
-        verify(userRepository).deleteById(1L);
+        verify(userRepository).hardDeleteById(1L);
 
         var inOrder = inOrder(userRepository);
         inOrder.verify(userRepository).findById(1L);
         inOrder.verify(userRepository).findUnboundByStudentNo("2021004");
+        inOrder.verify(userRepository).hardDeleteById(1L);
         inOrder.verify(userRepository).updateById(presetUser);
-        inOrder.verify(userRepository).deleteById(1L);
     }
 
     private User buildUser() {

@@ -95,6 +95,8 @@
 - 进一步确认：这里即使先执行 `deleteById(presetUser)` 也不能可靠解决，因为项目对 `user` 使用逻辑删除，软删除不会清空 `student_no`，唯一索引仍会冲突
 - 因此绑定修复方向应改为“把微信身份并入预置用户记录”，而不是“把预置学号复制到微信临时用户记录”
 - 本次绑定修复已落地：`bindStudentNo` 改为把 `openid/unionId/phone/avatar` 从微信临时用户并入预置用户，设置预置用户为已绑定后，再删除临时用户记录并返回预置用户详情
+- 二次报错根因已定位：上一版修复仍在当前微信临时用户存在时，把它的 `openid` 合并到预置用户；由于 `openid` 同样有唯一索引，且 `deleteById` 是逻辑删除，不会释放唯一值，因此继续触发 `Duplicate entry ... for key 'openid'`
+- 最终修复已落地：为 `UserRepository` 新增物理删除方法，`bindStudentNo` 改为先物理删除微信临时用户，再更新预置用户写入 `openid/unionId/phone/avatar`，从而同时规避 `student_no` 与 `openid` 两类唯一键冲突
 
 ## Technical Decisions
 <!-- 

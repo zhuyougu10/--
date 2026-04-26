@@ -2,6 +2,7 @@ package com.stadium.booking.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.stadium.booking.entity.User;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import java.util.Optional;
@@ -22,4 +23,7 @@ public interface UserRepository extends BaseMapper<User> {
 
     @Select("SELECT * FROM user WHERE student_no = #{studentNo} AND is_bound = 0 AND deleted_at IS NULL")
     Optional<User> findUnboundByStudentNo(String studentNo);
+
+    @Delete("DELETE FROM user WHERE id = #{id}")
+    int hardDeleteById(Long id);
 }

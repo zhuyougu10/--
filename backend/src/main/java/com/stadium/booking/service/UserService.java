@@ -138,11 +138,12 @@ public class UserService {
         }
         presetUser.setIsBound(1);
         presetUser.setBoundAt(LocalDateTime.now());
-        userRepository.updateById(presetUser);
 
         if (presetUser.getId() != null && !presetUser.getId().equals(userId)) {
-            userRepository.deleteById(userId);
+            userRepository.hardDeleteById(userId);
         }
+
+        userRepository.updateById(presetUser);
 
         return getUserDetail(presetUser.getId());
     }

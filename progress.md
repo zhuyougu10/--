@@ -435,11 +435,14 @@
   - 识别出逻辑删除前提下，先删预置用户也不能释放 `student_no` 唯一约束
   - 新增失败回归测试，锁定“应合并到预置用户而非更新当前临时用户”的行为
   - 修复 `bindStudentNo` 为合并微信身份到预置用户，再删除临时用户记录
+  - 根据二次错误日志继续定位到 `openid` 唯一键同样会被逻辑删除阻塞
+  - 增加 `hardDeleteById`，将绑定顺序调整为先物理删除临时用户，再更新预置用户
 - Files created/modified:
   - findings.md (更新)
   - progress.md (更新)
   - backend/src/main/java/com/stadium/booking/service/UserService.java (更新)
   - backend/src/test/java/com/stadium/booking/service/UserServiceTest.java (更新)
+  - backend/src/main/java/com/stadium/booking/repository/UserRepository.java (更新)
 
 ## Test Results (绑定修复追加)
 | Test | Input | Expected | Actual | Status |
