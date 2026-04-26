@@ -91,6 +91,10 @@
 - 本次已修正普通用户页契约：查询参数统一为 `keyword`，预约记录/违约记录兼容后端返回数组结构
 - 审阅后补充了请求校验：后台账号新增增加密码最小长度、字段长度与邮箱格式校验；预置用户新增增加字段长度与 `userType(1-3)` 合法性校验
 - 为解决预置用户并发重复创建导致的绑定歧义，本次新增迁移 `V11__add_unique_student_no_to_user.sql`
+- 绑定账号报错根因已定位：`UserService#bindStudentNo` 当前把微信登录产生的临时用户直接更新为预置用户的 `student_no`，但 `student_no` 现在有唯一索引，且预置用户记录仍存在，因此 `UPDATE user ... student_no=?` 直接触发 `uk_user_student_no`
+- 进一步确认：这里即使先执行 `deleteById(presetUser)` 也不能可靠解决，因为项目对 `user` 使用逻辑删除，软删除不会清空 `student_no`，唯一索引仍会冲突
+- 因此绑定修复方向应改为“把微信身份并入预置用户记录”，而不是“把预置学号复制到微信临时用户记录”
+- 本次绑定修复已落地：`bindStudentNo` 改为把 `openid/unionId/phone/avatar` 从微信临时用户并入预置用户，设置预置用户为已绑定后，再删除临时用户记录并返回预置用户详情
 
 ## Technical Decisions
 <!-- 

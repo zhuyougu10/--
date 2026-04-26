@@ -128,18 +128,23 @@ public class UserService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "姓名与工号/学号不匹配");
         }
 
-        currentUser.setStudentNo(presetUser.getStudentNo());
-        currentUser.setName(presetUser.getName());
-        currentUser.setUserType(presetUser.getUserType());
-        currentUser.setIsBound(1);
-        currentUser.setBoundAt(LocalDateTime.now());
-        userRepository.updateById(currentUser);
+        presetUser.setOpenid(currentUser.getOpenid());
+        presetUser.setUnionId(currentUser.getUnionId());
+        if (currentUser.getPhone() != null) {
+            presetUser.setPhone(currentUser.getPhone());
+        }
+        if (currentUser.getAvatar() != null) {
+            presetUser.setAvatar(currentUser.getAvatar());
+        }
+        presetUser.setIsBound(1);
+        presetUser.setBoundAt(LocalDateTime.now());
+        userRepository.updateById(presetUser);
 
         if (presetUser.getId() != null && !presetUser.getId().equals(userId)) {
-            userRepository.deleteById(presetUser.getId());
+            userRepository.deleteById(userId);
         }
 
-        return getUserDetail(userId);
+        return getUserDetail(presetUser.getId());
     }
 
     private UserResponse toResponse(User user) {

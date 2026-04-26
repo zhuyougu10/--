@@ -425,3 +425,25 @@
 | 后端新增功能单测 | `mvn -q "-Dtest=AdminUserManagementServiceTest,UserServiceTest" test` | 通过 | 通过 | ✓ |
 | 后端编译 | `mvn -q -DskipTests compile` | 通过 | 通过 | ✓ |
 | 管理端构建 | `npm run build` | 通过 | 通过 | ✓ |
+
+### Phase 4: 微信绑定账号唯一键冲突定位
+- **Status:** complete
+- Actions taken:
+  - 结合用户提供异常日志定位到 `UserService#bindStudentNo`
+  - 确认报错发生在 `UPDATE user ... student_no=?`，唯一键为 `uk_user_student_no`
+  - 确认现有逻辑是先把预置学号写入当前微信临时用户，再删除预置用户
+  - 识别出逻辑删除前提下，先删预置用户也不能释放 `student_no` 唯一约束
+  - 新增失败回归测试，锁定“应合并到预置用户而非更新当前临时用户”的行为
+  - 修复 `bindStudentNo` 为合并微信身份到预置用户，再删除临时用户记录
+- Files created/modified:
+  - findings.md (更新)
+  - progress.md (更新)
+  - backend/src/main/java/com/stadium/booking/service/UserService.java (更新)
+  - backend/src/test/java/com/stadium/booking/service/UserServiceTest.java (更新)
+
+## Test Results (绑定修复追加)
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| 绑定回归测试 | `mvn -q "-Dtest=UserServiceTest#bindStudentNoMergesWechatIdentityIntoPresetUser" test` | 通过 | 通过 | ✓ |
+| UserService 单测 | `mvn -q "-Dtest=UserServiceTest" test` | 通过 | 通过 | ✓ |
+| 后端编译 | `mvn -q -DskipTests compile` | 通过 | 通过 | ✓ |
