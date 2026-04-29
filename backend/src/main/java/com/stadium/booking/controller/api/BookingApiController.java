@@ -45,7 +45,11 @@ public class BookingApiController {
     @Operation(summary = "获取预约详情")
     @GetMapping("/{bookingNo}")
     public Result<BookingResponse> getBooking(@PathVariable String bookingNo) {
-        return Result.success(bookingService.getBookingByNo(bookingNo));
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "请先登录");
+        }
+        return Result.success(bookingService.getUserBookingByNo(userId, bookingNo));
     }
 
     @Operation(summary = "获取我的预约列表")

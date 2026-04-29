@@ -139,6 +139,15 @@ public class BookingService {
         return toResponse(booking);
     }
 
+    public BookingResponse getUserBookingByNo(Long userId, String bookingNo) {
+        Booking booking = bookingRepository.findByBookingNo(bookingNo)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "预约不存在"));
+        if (!booking.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权查看此预约");
+        }
+        return toResponse(booking);
+    }
+
     public BookingResponse getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "预约不存在"));
