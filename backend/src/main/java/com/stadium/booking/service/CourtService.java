@@ -31,6 +31,12 @@ public class CourtService {
             .collect(Collectors.toList());
     }
 
+    public List<CourtResponse> listPublicByVenue(Long venueId) {
+        return courtRepository.findByVenueId(venueId).stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
     public IPage<CourtResponse> listPage(Integer current, Integer size, Long venueId, Integer status) {
         LambdaQueryWrapper<Court> wrapper = new LambdaQueryWrapper<>();
 
