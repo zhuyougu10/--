@@ -100,13 +100,14 @@ public class BookingValidator {
     private void validateTimeSlot(LocalTime startTime, LocalTime endTime, Venue venue) {
         int slotMinutes = venue.getSlotMinutes();
         long duration = ChronoUnit.MINUTES.between(startTime, endTime);
+        long startOffsetMinutes = ChronoUnit.MINUTES.between(venue.getOpenTime(), startTime);
         
         if (duration % slotMinutes != 0) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, 
                 "时段长度必须为 " + slotMinutes + " 分钟的整数倍");
         }
 
-        if (startTime.getMinute() % slotMinutes != 0) {
+        if (startOffsetMinutes % slotMinutes != 0) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, 
                 "开始时间必须对齐时段边界");
         }
