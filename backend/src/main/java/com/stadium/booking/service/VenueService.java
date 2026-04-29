@@ -60,7 +60,13 @@ public class VenueService {
         Venue venue = venueRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
         adminVenueAccessService.checkVenueAccess(venue.getId());
-        return toDetailResponse(venue);
+        return toAdminDetailResponse(venue);
+    }
+
+    public VenueResponse getPublicById(Long id) {
+        Venue venue = venueRepository.findById(id)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "球馆不存在"));
+        return toPublicDetailResponse(venue);
     }
 
     @Transactional
@@ -186,9 +192,16 @@ public class VenueService {
         return response;
     }
 
-    private VenueResponse toDetailResponse(Venue venue) {
+    private VenueResponse toAdminDetailResponse(Venue venue) {
         VenueResponse response = toResponse(venue);
         List<CourtResponse> courts = courtService.listByVenue(venue.getId());
+        response.setCourts(courts);
+        return response;
+    }
+
+    private VenueResponse toPublicDetailResponse(Venue venue) {
+        VenueResponse response = toResponse(venue);
+        List<CourtResponse> courts = courtService.listPublicByVenue(venue.getId());
         response.setCourts(courts);
         return response;
     }

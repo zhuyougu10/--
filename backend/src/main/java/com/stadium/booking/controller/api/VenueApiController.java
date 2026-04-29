@@ -30,7 +30,7 @@ public class VenueApiController {
     @Operation(summary = "获取球馆详情")
     @GetMapping("/{id}")
     public Result<VenueResponse> getById(@PathVariable Long id) {
-        return Result.success(venueService.getById(id));
+        return Result.success(venueService.getPublicById(id));
     }
 
     @Operation(summary = "获取场地可用时段")
