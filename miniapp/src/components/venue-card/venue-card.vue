@@ -45,7 +45,7 @@ const { getSportTypeName } = useSportType()
 
 const getSportTypes = (sportType: string) => {
   if (!sportType) return []
-  return sportType.split(',').filter(t => t.trim())
+  return sportType.split(',').map(t => t.trim()).filter(Boolean)
 }
 
 const isOpen = computed(() => isVenueOpen(props.venue))

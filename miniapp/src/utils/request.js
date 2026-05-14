@@ -1,10 +1,10 @@
-const BASE_URL = 'http://localhost:8080/api'
+import { API_BASE_URL } from '@/config/network'
 
 const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
     
-    let url = BASE_URL + options.url
+    let url = API_BASE_URL + options.url
     let data = options.data
     
     if (options.params && Object.keys(options.params).length > 0) {
